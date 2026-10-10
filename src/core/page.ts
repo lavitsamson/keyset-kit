@@ -48,8 +48,22 @@ export function preparePagination<T>(options: PaginateOptions<T>): PreparedPagin
  * ```
  */
 export function toPage<T>(rows: readonly T[], options: PaginateOptions<T>): Page<T> {
+  return buildPage(rows, options, readProperty);
+}
+
+/** @internal Reads a sort field from a row. Adapters can override it (MongoDB: missing → null). */
+export type ReadField = (row: unknown, field: string) => unknown;
+
+const readProperty: ReadField = (row, field) => (row as Record<string, unknown>)[field];
+
+/** @internal `toPage` with a custom field reader. */
+export function buildPage<T>(
+  rows: readonly T[],
+  options: PaginateOptions<T>,
+  read: ReadField,
+): Page<T> {
   const { sort, limit, direction } = resolveOptions(options);
-  assertUniqueTieBreaker(rows, sort);
+  assertUniqueTieBreaker(rows, sort, read);
 
   const hasMore = rows.length > limit;
   const data = rows.slice(0, limit);
@@ -58,7 +72,11 @@ export function toPage<T>(rows: readonly T[], options: PaginateOptions<T>): Page
   const first = data[0];
   const last = data[data.length - 1];
   const cursorFor = (row: T): string =>
-    encodeResolved(row as Record<string, unknown>, sort, options.secret);
+    encodeResolved(
+      Object.fromEntries(sort.map((s) => [s.field, read(row, s.field)])),
+      sort,
+      options.secret,
+    );
 
   return {
     data,
@@ -104,12 +122,13 @@ function positiveInteger(name: string, value: number): number {
 function assertUniqueTieBreaker(
   rows: readonly unknown[],
   sort: readonly ResolvedSortField[],
+  read: ReadField,
 ): void {
   const field = sort[sort.length - 1]?.field;
   if (field === undefined) return;
   const seen = new Set<string>();
   for (const row of rows) {
-    const value = (row as Record<string, unknown>)[field];
+    const value = read(row, field);
     if (value === null || value === undefined) {
       throw new TypeError(
         `keyset-kit: a row has no "${field}". The last sort field must be unique, non-null and selected.`,
