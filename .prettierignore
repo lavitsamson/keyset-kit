@@ -3,3 +3,8 @@ coverage
 pnpm-lock.yaml
 .changeset/*.md
 test/integration/prisma/generated
+docs/public/api
+docs/.vitepress/dist
+docs/.vitepress/cache
+examples/*/dist
+examples/*/src/generated

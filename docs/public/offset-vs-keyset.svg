@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <title id="t">OFFSET versus keyset pagination</title>
+  <desc id="d">OFFSET reads and discards every row before the requested page. Keyset pagination seeks directly to the cursor through the index and reads only the rows of the page.</desc>
+  <style>
+    .label { font-size: 15px; font-weight: 600; fill: #3c3c43; }
+    .note { font-size: 13px; fill: #67676c; }
+    .read { fill: #f3c6c6; stroke: #c94c4c; }
+    .page { fill: #b9e3c6; stroke: #2e8b57; }
+    .idle { fill: #eef0f3; stroke: #c2c6cc; }
+    .arrow { stroke: #2e8b57; stroke-width: 2.5; fill: none; marker-end: url(#head); }
+    @media (prefers-color-scheme: dark) {
+      .label { fill: #dfdfd6; } .note { fill: #98989f; }
+      .idle { fill: #2b2f36; stroke: #4a4f57; }
+    }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2e8b57"/>
+    </marker>
+  </defs>
+
+  <text x="20" y="32" class="label">OFFSET 40 LIMIT 10</text>
+  <text x="20" y="52" class="note">reads 50 rows, throws 40 away; slower on every page</text>
+  <g transform="translate(20,66)">
+    <rect x="0" y="0" width="520" height="34" rx="4" class="read"/>
+    <rect x="520" y="0" width="130" height="34" rx="4" class="page"/>
+    <rect x="650" y="0" width="30" height="34" rx="4" class="idle"/>
+    <text x="260" y="22" text-anchor="middle" class="note">rows 1–40 scanned and discarded</text>
+    <text x="585" y="22" text-anchor="middle" class="note">page</text>
+  </g>
+
+  <text x="20" y="172" class="label">WHERE (created_at, id) &lt; cursor LIMIT 10</text>
+  <text x="20" y="192" class="note">seeks through the index, reads only the page; same cost on every page</text>
+  <g transform="translate(20,206)">
+    <rect x="0" y="0" width="520" height="34" rx="4" class="idle"/>
+    <rect x="520" y="0" width="130" height="34" rx="4" class="page"/>
+    <rect x="650" y="0" width="30" height="34" rx="4" class="idle"/>
+    <text x="260" y="22" text-anchor="middle" class="note">never read</text>
+    <text x="585" y="22" text-anchor="middle" class="note">page</text>
+    <path d="M 40 58 C 200 82, 420 82, 516 42" class="arrow"/>
+    <text x="40" y="78" class="note">index seek to cursor</text>
+  </g>
+</svg>

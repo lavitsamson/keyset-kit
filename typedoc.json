@@ -1,0 +1,19 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "keyset-kit API",
+  "entryPoints": [
+    "src/index.ts",
+    "src/prisma/index.ts",
+    "src/typeorm/index.ts",
+    "src/mongoose/index.ts",
+    "src/express/index.ts"
+  ],
+  "tsconfig": "tsconfig.json",
+  "out": "docs/public/api",
+  "excludeInternal": true,
+  "readme": "none",
+  "includeVersion": true,
+  "validation": { "notExported": true, "invalidLink": true, "notDocumented": true },
+  "disableSources": true,
+  "treatWarningsAsErrors": true
+}

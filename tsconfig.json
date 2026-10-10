@@ -24,6 +24,6 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "test", "*.config.ts"],
-  "exclude": ["dist", "node_modules", "examples", "bench", "docs"]
+  "include": ["src", "test", "*.config.ts", "docs/.vitepress/config.ts"],
+  "exclude": ["dist", "node_modules", "examples", "bench"]
 }

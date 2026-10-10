@@ -11,6 +11,9 @@ export default tseslint.config(
       'coverage',
       'node_modules',
       'test/integration/prisma/generated',
+      'examples/*/dist',
+      'docs/public/api',
+      'examples/*/src/generated',
       'docs/.vitepress/cache',
       'docs/.vitepress/dist',
     ],
@@ -29,6 +32,8 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
+      // Allow intentionally unused parameters, e.g. Express error handlers need all four.
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
   {
