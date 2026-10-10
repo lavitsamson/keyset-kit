@@ -23,6 +23,15 @@ export default defineConfig({
           hookTimeout: 180_000,
         },
       },
+      {
+        // Builds and runs each app in examples/ against real databases. Needs `pnpm build` first.
+        test: {
+          name: 'examples',
+          include: ['test/examples/**/*.test.ts'],
+          testTimeout: 120_000,
+          hookTimeout: 300_000,
+        },
+      },
     ],
     // Thresholds apply to the combined unit + integration run (`pnpm test:coverage`):
     // some adapter paths are only meaningful against a real database.
