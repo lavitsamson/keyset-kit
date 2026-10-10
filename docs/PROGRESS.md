@@ -3,7 +3,7 @@
 ## 1. Setup
 
 - [x] npm name check: `keyset-kit` is available (`npm view keyset-kit` → 404, 2026-10-10)
-- [x] Git repository, pnpm 12 workspace, Node 22 (`.node-version`)
+- [x] Git repository, pnpm 12 workspace, Node 24 LTS for development (`.node-version`), Node ≥ 22 supported
 - [x] Supply-chain guards: `minimumReleaseAge` (14 days), `allowBuilds`, SHA-pinned Actions
 - [x] TypeScript strict + `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess`
 - [x] tsup dual ESM/CJS build with `.d.ts`/`.d.cts`, 5-entry `exports` map, `sideEffects: false`
