@@ -1,0 +1,6 @@
+{
+  // TypeDoc documents the published sources only, so it must not depend on test setup
+  // (such as the generated Prisma client).
+  "extends": "./tsconfig.json",
+  "include": ["src"]
+}

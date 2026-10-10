@@ -8,7 +8,7 @@
     "src/mongoose/index.ts",
     "src/express/index.ts"
   ],
-  "tsconfig": "tsconfig.json",
+  "tsconfig": "tsconfig.typedoc.json",
   "out": "docs/public/api",
   "excludeInternal": true,
   "readme": "none",
