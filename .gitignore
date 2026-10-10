@@ -1,13 +1,29 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
 coverage/
 *.tsbuildinfo
 *.tgz
-.env
-.env.*
-docs/.vitepress/cache/
-docs/.vitepress/dist/
-docs/api/
-.DS_Store
+
+# Generated code and docs (rebuilt by `pnpm generate` / `pnpm docs:build`)
 test/integration/prisma/generated/
 docs/public/api/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# Environment files (keep templates committable)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Editors and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
