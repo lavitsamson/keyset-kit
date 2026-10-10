@@ -230,12 +230,15 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** Prisma's `Decimal` (decimal.js) or BSON `Decimal128`. */
+/**
+ * decimal.js (Prisma's `Decimal`) or BSON `Decimal128`. decimal.js sets `Symbol.toStringTag`, which
+ * survives bundling; constructor names do not (Prisma 7 ships it as `Decimal2`).
+ */
 function isDecimal(value: unknown): boolean {
   if (typeof value !== 'object' || value === null) return false;
   return (
     (value as { _bsontype?: unknown })._bsontype === 'Decimal128' ||
-    (value as { constructor?: { name?: unknown } }).constructor?.name === 'Decimal'
+    Object.prototype.toString.call(value) === '[object Decimal]'
   );
 }
 

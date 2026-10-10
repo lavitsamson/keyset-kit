@@ -17,11 +17,12 @@ export interface SortField<T> {
    * Where `null` values sort. Defaults to PostgreSQL's behaviour: nulls count as larger than
    * any value, so they come `last` ascending and `first` descending.
    */
-  nulls?: 'first' | 'last';
+  nulls?: 'first' | 'last' | undefined;
 }
 
 /**
- * Options accepted by `toPage` and every adapter.
+ * Options accepted by `toPage` and every adapter. Optional fields also accept `undefined`, so values
+ * such as `process.env.CURSOR_SECRET` or `req.query.after` can be passed straight through.
  *
  * @example
  * ```ts
@@ -36,15 +37,15 @@ export interface PaginateOptions<T> {
   /** Sort specification. Must end with a unique, non-null field (e.g. `id`) so ordering is total. */
   sort: readonly SortField<T>[];
   /** Page size. Defaults to 20. */
-  limit?: number;
+  limit?: number | undefined;
   /** Upper bound for `limit`; larger requests are clamped. Defaults to 100. */
-  maxLimit?: number;
+  maxLimit?: number | undefined;
   /** Cursor to continue forwards from. */
-  after?: string | null;
+  after?: string | null | undefined;
   /** Cursor to continue backwards from. */
-  before?: string | null;
+  before?: string | null | undefined;
   /** When set, cursors are HMAC-SHA256 signed and verified with this secret. */
-  secret?: string;
+  secret?: string | undefined;
 }
 
 /** Navigation metadata for a page. */
@@ -68,19 +69,19 @@ export interface Page<T> {
 export interface AnySortField {
   field: string;
   direction: SortDirection;
-  nulls?: 'first' | 'last';
+  nulls?: 'first' | 'last' | undefined;
 }
 
 /** Options for `encodeCursor` and `decodeCursor`. */
 export interface CursorOptions {
   /** Sign (encode) or verify (decode) the cursor with HMAC-SHA256. */
-  secret?: string;
+  secret?: string | undefined;
   /**
    * Bind the cursor to this sort specification. On encode, only the sort fields are stored and a
    * hash of the spec is embedded; on decode, a cursor made under a different spec is rejected
    * with `SORT_MISMATCH`.
    */
-  sort?: readonly AnySortField[];
+  sort?: readonly AnySortField[] | undefined;
 }
 
 /** Which side of the cursor a page lies on. */

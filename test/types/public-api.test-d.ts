@@ -32,10 +32,16 @@ describe('public types', () => {
     assertType<SortField<Post>>({ field: 'nope', direction: 'asc' });
   });
 
-  it('does not accept explicit undefined for optional options (exactOptionalPropertyTypes)', () => {
-    const options = { sort, limit: undefined };
-    // @ts-expect-error - limit must be omitted, not undefined
-    assertType<PaginateOptions<Post>>(options);
+  it('accepts explicit undefined for optional options (env vars, optional query params)', () => {
+    const secret: string | undefined = process.env['CURSOR_SECRET'];
+    const after: string | undefined = undefined;
+    assertType<PaginateOptions<Post>>({ sort, limit: undefined, after, secret });
+    assertType<Parameters<typeof encodeCursor>[1]>({ secret, sort: undefined });
+  });
+
+  it('still rejects wrongly typed options', () => {
+    // @ts-expect-error - limit must be a number
+    assertType<PaginateOptions<Post>>({ sort, limit: '20' });
   });
 
   it('accepts a readonly (as const) sort spec', () => {

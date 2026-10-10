@@ -31,6 +31,7 @@ function expectCursorError(fn: () => unknown, code: InvalidCursorCode, message?:
 
 // Stand-ins for ORM value types, matched the same way the library detects the real ones.
 class Decimal {
+  readonly [Symbol.toStringTag] = 'Decimal'; // as decimal.js does
   constructor(private readonly value: string) {}
   toString(): string {
     return this.value;
@@ -86,6 +87,13 @@ describe('encodeCursor / decodeCursor', () => {
     ['an invalid Date', new Date('nope'), /invalid Date/],
     ['a NaN decimal', new Decimal('NaN'), /decimal "NaN"/],
     ['a plain object', { nested: 1 }, /type Object/],
+    [
+      'an object merely named Decimal',
+      new (class Decimal {
+        value = '1';
+      })(),
+      /type Decimal/,
+    ],
     ['an array', [1, 2], /type Array/],
     ['a symbol', Symbol('x'), /type symbol/],
     ['a function', () => 1, /type function/],
