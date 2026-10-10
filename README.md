@@ -32,17 +32,31 @@ npm install keyset-kit
 
 ## Quick start
 
-_Coming in Milestone 3 (Express + Prisma example)._
+<!-- prettier-ignore -->
+```ts
+import { paginatePrisma } from 'keyset-kit/prisma';
+
+app.get('/posts', async (req, res) => {
+  const page = await paginatePrisma(prisma.post, { where: { published: true } }, {
+    sort: [{ field: 'createdAt', direction: 'desc' }, { field: 'id', direction: 'asc' }],
+    after: typeof req.query.after === 'string' ? req.query.after : null,
+    secret: process.env.CURSOR_SECRET, // optional: sign cursors
+  });
+  res.json(page); // { data, pageInfo: { hasNextPage, endCursor, ... } }
+});
+```
+
+The next request passes `?after=<endCursor>`. The sort must end with a unique column (here `id`).
 
 ## Entry points
 
-| Import                | Purpose                                                 | Peer dependency  |
-| --------------------- | ------------------------------------------------------- | ---------------- |
-| `keyset-kit`          | Cursor encoding/signing, keyset condition AST, `toPage` | none             |
-| `keyset-kit/prisma`   | `paginatePrisma`                                        | `@prisma/client` |
-| `keyset-kit/typeorm`  | `paginateQueryBuilder`                                  | `typeorm`        |
-| `keyset-kit/mongoose` | `paginateMongoose`                                      | `mongoose`       |
-| `keyset-kit/express`  | `keysetParams` middleware, `setLinkHeader`              | `express`        |
+| Import                | Purpose                                                 | Peer dependency  | Status  |
+| --------------------- | ------------------------------------------------------- | ---------------- | ------- |
+| `keyset-kit`          | Cursor encoding/signing, keyset condition AST, `toPage` | none             | ✅      |
+| `keyset-kit/prisma`   | `paginatePrisma` (tested on PostgreSQL)                 | `@prisma/client` | ✅      |
+| `keyset-kit/typeorm`  | `paginateQueryBuilder`                                  | `typeorm`        | planned |
+| `keyset-kit/mongoose` | `paginateMongoose`                                      | `mongoose`       | planned |
+| `keyset-kit/express`  | `keysetParams` middleware, `setLinkHeader`              | `express`        | planned |
 
 ## Development
 
@@ -50,9 +64,11 @@ Supports Node ≥ 22. Development uses Node 24 LTS (pinned in `.node-version`; [
 
 ```sh
 pnpm install
+pnpm generate        # Prisma client for the integration tests (needed before lint/typecheck)
 pnpm lint            # ESLint + (pnpm format:check for Prettier)
 pnpm typecheck
 pnpm test            # unit + type tests (pnpm test:coverage for coverage)
+pnpm test:int        # integration tests on real databases (requires Docker)
 pnpm build           # tsup → dist/ (ESM + CJS + .d.ts)
 pnpm check:package   # publint + are-the-types-wrong
 pnpm size            # size-limit (core ≤ 3 kB min+gzip)
@@ -62,6 +78,7 @@ pnpm size            # size-limit (core ≤ 3 kB min+gzip)
 
 - [ADR 0001: Build and language toolchain](docs/adr/0001-toolchain.md): why TypeScript 6 + tsup, Node ≥ 22, and pnpm's supply-chain guards.
 - [ADR 0002: Cursor format, signing and ordering](docs/adr/0002-cursor-format-and-ordering.md): what's in a cursor, how signing and sort binding work, and how nulls and ties are ordered.
+- [ADR 0003: Adapter design and the conformance suite](docs/adr/0003-adapter-design.md): one shared pipeline, structural ORM types, and a conformance suite every adapter must pass on a real database.
 
 ## Author
 

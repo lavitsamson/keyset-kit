@@ -29,9 +29,13 @@ Notes: core coverage 100% lines / 99.5% branches; core size 2.86 kB min+gzip (bu
 
 ## 3. Prisma adapter
 
-- [ ] `paginatePrisma`
-- [ ] Shared conformance suite (`test/integration/conformance.ts`) on Postgres via Testcontainers
-- [ ] CI integration step
+- [x] `paginatePrisma` (structural delegate type, AND with caller filter, select/include pass-through)
+- [x] Shared conformance suite (`test/integration/conformance.ts`) on PostgreSQL 18.6 via Testcontainers
+- [x] CI integration step (+ `pnpm generate` for the test Prisma client)
+- [x] ADR 0003 (adapter design and conformance suite)
+
+Notes: the conformance suite caught Prisma 7's minified `Decimal2` class name; decimal detection now
+uses `Symbol.toStringTag`. Optional options now accept explicit `undefined` (e.g. `process.env`).
 
 ## 4. TypeORM adapter
 
