@@ -54,7 +54,7 @@ The next request passes `?after=<endCursor>`. The sort must end with a unique co
 | --------------------- | ------------------------------------------------------- | ---------------- | ------- |
 | `keyset-kit`          | Cursor encoding/signing, keyset condition AST, `toPage` | none             | ✅      |
 | `keyset-kit/prisma`   | `paginatePrisma` (tested on PostgreSQL)                 | `@prisma/client` | ✅      |
-| `keyset-kit/typeorm`  | `paginateQueryBuilder`                                  | `typeorm`        | planned |
+| `keyset-kit/typeorm`  | `paginateQueryBuilder` (tested on PostgreSQL)           | `typeorm`        | ✅      |
 | `keyset-kit/mongoose` | `paginateMongoose`                                      | `mongoose`       | planned |
 | `keyset-kit/express`  | `keysetParams` middleware, `setLinkHeader`              | `express`        | planned |
 
@@ -67,8 +67,9 @@ pnpm install
 pnpm generate        # Prisma client for the integration tests (needed before lint/typecheck)
 pnpm lint            # ESLint + (pnpm format:check for Prettier)
 pnpm typecheck
-pnpm test            # unit + type tests (pnpm test:coverage for coverage)
+pnpm test            # unit + type tests
 pnpm test:int        # integration tests on real databases (requires Docker)
+pnpm test:coverage   # both, with coverage thresholds (requires Docker)
 pnpm build           # tsup → dist/ (ESM + CJS + .d.ts)
 pnpm check:package   # publint + are-the-types-wrong
 pnpm size            # size-limit (core ≤ 3 kB min+gzip)

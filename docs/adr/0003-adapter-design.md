@@ -34,6 +34,20 @@ default for that direction, and `{ sort, nulls }` only when it doesn't. The two 
 but the plain form also works on required fields (Prisma only accepts `nulls` on optional ones),
 and PostgreSQL can serve it with an ordinary B-tree index in both directions.
 
+### TypeORM query builders
+
+- **Clone, never modify.** `paginateQueryBuilder` works on `qb.clone()`, so the caller can reuse
+  their builder for the next page.
+- **Keep the caller's conditions grouped.** TypeORM renders `where(a).orWhere(b).andWhere(c)` as
+  `a OR b AND c`, and a single raw string such as `"a OR b"` is never parenthesised. The adapter
+  wraps the existing `WHERE` with TypeORM's `brackets` operator (which always adds parentheses)
+  before ANDing the keyset condition.
+- **Validate fields against entity metadata.** Sort fields may come from a query string (see the
+  Express middleware). Each one must be a real property of the aliased entity before it's
+  interpolated as `alias.property`. Values always go in as named parameters.
+- **`take`, not `limit`.** With one-to-many joins, `LIMIT` counts joined rows. `take` makes
+  TypeORM paginate distinct entities, which an integration test checks.
+
 ### The conformance suite
 
 `test/integration/conformance.ts` defines the behaviour every adapter must have. Each adapter

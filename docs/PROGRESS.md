@@ -39,7 +39,11 @@ uses `Symbol.toStringTag`. Optional options now accept explicit `undefined` (e.g
 
 ## 4. TypeORM adapter
 
-- [ ] `paginateQueryBuilder` + conformance on Postgres
+- [x] `paginateQueryBuilder` (clones the builder, groups caller conditions, validates fields against metadata, `take` for joins)
+- [x] Conformance suite on PostgreSQL 18.6 (plus OR-precedence, join, immutability and validation tests)
+- [x] Coverage measured over unit + integration (Vitest projects)
+
+Notes: verified under several local timezones (Europe/Berlin, America/New_York, Asia/Kolkata).
 
 ## 5. Mongoose adapter
 
