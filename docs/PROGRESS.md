@@ -63,8 +63,14 @@ server with Node's `fetch` (no Supertest dependency).
 
 ## 7. Examples + docs site
 
-- [ ] `examples/express-prisma`, `examples/express-mongoose`, `examples/nestjs-typeorm` (+ CI smoke test)
-- [ ] VitePress site + TypeDoc, GitHub Pages workflow
+- [x] `examples/express-prisma`, `examples/express-mongoose`, `examples/nestjs-typeorm` (one command each, versions shared via a pnpm catalog)
+- [x] Examples smoke test in CI (build, seed, run, page over HTTP against Testcontainers databases)
+- [x] VitePress site (all guide pages from the spec, ADRs included) + TypeDoc API reference (warnings fail the build)
+- [x] GitHub Pages workflow (`.github/workflows/docs.yml`)
+
+Notes: the Mongoose example exposed a real bug. Cursor sort hashes included database-specific null
+defaults, so middleware and Mongoose disagreed. Hashes now cover the declared sort only (ADR 0002).
+TypeDoc source links are disabled until the GitHub repository exists.
 
 ## 8. Benchmarks
 

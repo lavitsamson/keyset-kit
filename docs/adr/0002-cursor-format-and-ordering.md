@@ -32,11 +32,18 @@ it must give a total, gap-free order even with duplicate values and nulls.
 
 The spec defines `encodeCursor(values, { secret })`. That function can't compute a sort-spec hash
 because it never sees the sort. We added one optional option, `sort`, to `CursorOptions`. With it,
-only the sort fields are stored and a 32-bit FNV-1a hash of the resolved spec (field, direction,
-nulls) is embedded. `decodeCursor(..., { sort })` rejects a different spec with `SORT_MISMATCH`.
+only the sort fields are stored and a 32-bit FNV-1a hash of the spec **as declared** (field,
+direction, and `nulls` only when set explicitly) is embedded. `decodeCursor(..., { sort })` rejects a different spec with `SORT_MISMATCH`.
 `toPage` and the adapters always pass it. The change is additive: existing call shapes still work.
 
 The hash detects mistakes; it isn't a security control. Tamper resistance comes from signing.
+
+The hash deliberately leaves out null placements that a particular database fills in. The first
+version hashed the resolved spec, so it baked in PostgreSQL's defaults. The examples' smoke test
+then showed that a cursor issued by the Mongoose adapter (MongoDB's null order) failed the Express
+middleware's check (PostgreSQL's) with `SORT_MISMATCH` on page 2. Hashing the declared spec makes
+a cursor's identity independent of the database. The trade-off is that adding an explicit `nulls`
+equal to the default changes the hash, which invalidates outstanding cursors like any other sort change.
 
 `CursorOptions.sort` is typed with the structural `AnySortField` rather than
 `SortField<Record<string, unknown>>`. `SortField<T>` is contravariant in `T` (through
@@ -53,10 +60,12 @@ synchronous and Web Crypto's HMAC is async-only. Every adapter targets Node, so 
 
 ### Null ordering
 
-The core needs one concrete null order to build conditions. The default is PostgreSQL's: nulls
-count as larger than any value, so they come last ascending and first descending. Adapters emit
-explicit `NULLS FIRST/LAST` so the database matches the condition exactly. MongoDB can't change
-its order (nulls are smallest), so the Mongoose adapter will pass that order explicitly.
+The core needs one concrete null order to build conditions. Fields without a `nulls` option get
+the database's default, passed in by the adapter as a `NullOrder`: `largest` (PostgreSQL: last
+ascending, first descending) for Prisma and TypeORM, `smallest` for Mongoose. Adapters emit
+`NULLS FIRST/LAST` only when the requested order differs from the database default, so the query
+and the condition always agree. MongoDB can't change its order, so the Mongoose adapter rejects
+`nulls` options that contradict it. The sort you declare is never rewritten (see the hash above).
 
 ### Condition shape
 

@@ -62,6 +62,26 @@ last `defaultSort` field (`id`) is the unique tie-breaker, appended to every sor
 | `keyset-kit/mongoose` | `paginateMongoose` (tested on MongoDB)                  | `mongoose`       | ✅     |
 | `keyset-kit/express`  | `keysetParams` middleware, `setLinkHeader`              | `express`        | ✅     |
 
+## Documentation
+
+The guide lives in [`docs/`](docs/guide/getting-started.md) and is published as a VitePress site
+(with a TypeDoc API reference) to GitHub Pages: getting started, why keyset pagination, each adapter,
+the Express middleware, signed cursors, sorting & nulls, error handling, migrating from OFFSET, and
+an FAQ. Run it locally with `pnpm docs:dev`.
+
+## Examples
+
+Three complete apps, each started with one command from the repository root (Docker required):
+
+| Command                         | Stack                              |
+| ------------------------------- | ---------------------------------- |
+| `pnpm example:express-prisma`   | Express 5 + Prisma 7 + PostgreSQL  |
+| `pnpm example:express-mongoose` | Express 5 + Mongoose 9 + MongoDB   |
+| `pnpm example:nestjs-typeorm`   | NestJS 12 + TypeORM 1 + PostgreSQL |
+
+Each serves `GET /posts` on <http://localhost:3000> with 200 seeded posts. CI builds and runs all
+three and pages through them over HTTP.
+
 ## Database notes
 
 - **Null ordering.** By default nulls sort like PostgreSQL: last ascending, first descending.
@@ -80,12 +100,14 @@ Supports Node ≥ 22. Development uses Node 24 LTS (pinned in `.node-version`; [
 
 ```sh
 pnpm install
-pnpm generate        # Prisma client for the integration tests (needed before lint/typecheck)
+pnpm generate        # Prisma clients for the tests and the example (needed before lint/typecheck)
 pnpm lint            # ESLint + (pnpm format:check for Prettier)
 pnpm typecheck
 pnpm test            # unit + type tests
 pnpm test:int        # integration tests on real databases (requires Docker)
 pnpm test:coverage   # both, with coverage thresholds (requires Docker)
+pnpm test:examples   # smoke-test the example apps (requires Docker; run pnpm build first)
+pnpm docs:dev        # docs site with API reference at http://localhost:5173
 pnpm build           # tsup → dist/ (ESM + CJS + .d.ts)
 pnpm check:package   # publint + are-the-types-wrong
 pnpm size            # size-limit (core ≤ 3 kB min+gzip)
