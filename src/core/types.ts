@@ -34,8 +34,12 @@ export interface SortField<T> {
  * ```
  */
 export interface PaginateOptions<T> {
-  /** Sort specification. Must end with a unique, non-null field (e.g. `id`) so ordering is total. */
-  sort: readonly SortField<T>[];
+  /**
+   * Sort specification. Must end with a unique, non-null field (e.g. `id`) so ordering is total.
+   * Either written against the model (field names are type-checked) or a `ParsedSort` from the
+   * Express middleware (checked against its allow-list at runtime).
+   */
+  sort: readonly SortField<T>[] | ParsedSort;
   /** Page size. Defaults to 20. */
   limit?: number | undefined;
   /** Upper bound for `limit`; larger requests are clamped. Defaults to 100. */
@@ -71,6 +75,15 @@ export interface AnySortField {
   direction: SortDirection;
   nulls?: 'first' | 'last' | undefined;
 }
+
+declare const parsedSortBrand: unique symbol;
+
+/**
+ * A sort spec parsed from user input and checked against an allow-list at runtime, as produced by
+ * `keysetParams()` from `keyset-kit/express`. Its field names are plain strings, so the brand is
+ * what lets it stand in for a model-typed sort. Hand-written arrays never carry it.
+ */
+export type ParsedSort = readonly AnySortField[] & { readonly [parsedSortBrand]: true };
 
 /** Options for `encodeCursor` and `decodeCursor`. */
 export interface CursorOptions {

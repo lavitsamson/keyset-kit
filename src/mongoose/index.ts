@@ -1,6 +1,6 @@
 import { buildPage, preparePagination, type ReadField } from '../core/page.js';
 import { resolveSort } from '../core/sort.js';
-import type { KeysetCondition, Page, PaginateOptions, SortField } from '../core/types.js';
+import type { KeysetCondition, Page, PaginateOptions } from '../core/types.js';
 
 /**
  * The parts of a Mongoose `Query` the adapter uses (`Model.find(...)`, optionally `.lean()`).
@@ -118,7 +118,9 @@ export function toMongoFilter(condition: KeysetCondition): MongoFilter {
  * @internal Makes MongoDB's fixed null ordering explicit (first ascending, last descending) and
  * rejects sort fields that ask for the opposite.
  */
-export function withMongoNullOrder<T>(sort: readonly SortField<T>[]): SortField<T>[] {
+export function withMongoNullOrder<T>(
+  sort: PaginateOptions<T>['sort'],
+): PaginateOptions<T>['sort'] {
   resolveSort(sort); // validate shape first, for the usual actionable errors
   return sort.map((s) => {
     const natural = s.direction === 'asc' ? 'first' : 'last';
@@ -129,5 +131,5 @@ export function withMongoNullOrder<T>(sort: readonly SortField<T>[]): SortField<
       );
     }
     return { ...s, nulls: natural };
-  });
+  }) as PaginateOptions<T>['sort'];
 }
