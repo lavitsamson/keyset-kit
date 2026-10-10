@@ -8,7 +8,7 @@ Tiny, type-safe keyset (cursor) pagination for Prisma, TypeORM, Mongoose and Exp
 
 <!-- npm version and bundle-size badges are added with the first npm release. -->
 
-📖 **Documentation:** <https://lavitsamson.github.io/keyset-kit/>
+**Documentation:** <https://lavitsamson.github.io/keyset-kit/>
 
 > **Status:** pre-release, under active development. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
@@ -60,13 +60,13 @@ last `defaultSort` field (`id`) is the unique tie-breaker, appended to every sor
 
 ## Entry points
 
-| Import                | Purpose                                                 | Peer dependency  | Status |
-| --------------------- | ------------------------------------------------------- | ---------------- | ------ |
-| `keyset-kit`          | Cursor encoding/signing, keyset condition AST, `toPage` | none             | ✅     |
-| `keyset-kit/prisma`   | `paginatePrisma` (tested on PostgreSQL)                 | `@prisma/client` | ✅     |
-| `keyset-kit/typeorm`  | `paginateQueryBuilder` (tested on PostgreSQL)           | `typeorm`        | ✅     |
-| `keyset-kit/mongoose` | `paginateMongoose` (tested on MongoDB)                  | `mongoose`       | ✅     |
-| `keyset-kit/express`  | `keysetParams` middleware, `setLinkHeader`              | `express`        | ✅     |
+| Import                | Purpose                                                 | Peer dependency  |
+| --------------------- | ------------------------------------------------------- | ---------------- |
+| `keyset-kit`          | Cursor encoding/signing, keyset condition AST, `toPage` | none             |
+| `keyset-kit/prisma`   | `paginatePrisma` (tested on PostgreSQL)                 | `@prisma/client` |
+| `keyset-kit/typeorm`  | `paginateQueryBuilder` (tested on PostgreSQL)           | `typeorm`        |
+| `keyset-kit/mongoose` | `paginateMongoose` (tested on MongoDB)                  | `mongoose`       |
+| `keyset-kit/express`  | `keysetParams` middleware, `setLinkHeader`              | `express`        |
 
 ## Documentation
 
