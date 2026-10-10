@@ -137,7 +137,7 @@ describe('encodeCursor / decodeCursor', () => {
       expectCursorError(
         () => decodeCursor(craft([1, hash, { createdAt: 1, other: 2 }]), { sort }),
         'INVALID_CURSOR',
-        /fields do not match/,
+        /Cursor is malformed/,
       );
       expectCursorError(
         () => decodeCursor(craft([1, hash, { createdAt: 1 }]), { sort }),

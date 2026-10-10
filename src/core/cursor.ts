@@ -11,6 +11,11 @@ const BASE64URL = /^[A-Za-z0-9_-]+$/;
 const DECIMAL = /^-?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
 const BIGINT = /^-?\d+$/;
 const OBJECT_ID = /^[0-9a-f]{24}$/i;
+/**
+ * One message for every structural problem: a client can only discard such a cursor, so finer
+ * detail would not help it (and costs bundle size).
+ */
+const MALFORMED = 'Cursor is malformed. Restart from the first page.';
 
 /** JSON-safe cursor value. Non-JSON types become `[tag, string]`; raw values are never arrays. */
 type TaggedValue = string | number | boolean | null | [tag: 'd' | 'b' | 'n' | 'o', value: string];
@@ -97,20 +102,20 @@ export function decodeResolved(
     if (!safeEqual(signature, sign(payload, secret))) {
       throw new InvalidCursorError(
         'TAMPERED_CURSOR',
-        'Cursor signature is invalid: modified, or signed with another secret.',
+        'Cursor signature does not match the secret.',
       );
     }
   } else if (signature !== null) {
     throw invalid('Cursor is signed; pass the `secret` it was created with.');
   }
 
-  if (!BASE64URL.test(payload)) throw invalid('Cursor is not valid base64url.');
+  if (!BASE64URL.test(payload)) throw invalid(MALFORMED);
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
   } catch {
-    throw invalid('Cursor payload is not valid JSON.');
+    throw invalid(MALFORMED);
   }
 
   if (
@@ -120,7 +125,7 @@ export function decodeResolved(
     (parsed[1] !== null && typeof parsed[1] !== 'string') ||
     !isPlainObject(parsed[2])
   ) {
-    throw invalid('Cursor payload has an unexpected shape.');
+    throw invalid(MALFORMED);
   }
   const hash = parsed[1] as string | null;
   const tagged = parsed[2];
@@ -134,7 +139,7 @@ export function decodeResolved(
     }
     const keys = Object.keys(tagged);
     if (keys.length !== sort.length || !sort.every((s) => Object.hasOwn(tagged, s.field))) {
-      throw invalid('Cursor fields do not match the sort specification.');
+      throw invalid(MALFORMED);
     }
   }
 
@@ -206,7 +211,7 @@ function untag(value: unknown): unknown {
         break;
     }
   }
-  throw invalid('Cursor contains a value that cannot be decoded.');
+  throw invalid(MALFORMED);
 }
 
 function sign(payload: string, secret: string): string {
