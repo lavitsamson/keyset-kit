@@ -16,12 +16,16 @@
 
 ## 2. Core
 
-- [ ] `encodeCursor` / `decodeCursor` (base64url compact tuple, typed tagging for Date/bigint/decimal)
-- [ ] HMAC-SHA256 signing with constant-time verification
-- [ ] Sort-spec hashing (`SORT_MISMATCH`) and unique-last-field validation
-- [ ] `buildKeysetCondition` AST (multi-column, per-field direction, nulls)
-- [ ] `toPage` (limit + 1, backwards pagination, `pageInfo`)
-- [ ] Unit + property-based tests (forward/backward walk, stability)
+- [x] `encodeCursor` / `decodeCursor` (base64url compact tuple, typed tagging for Date/bigint/decimal/ObjectId)
+- [x] HMAC-SHA256 signing with constant-time verification (`node:crypto`)
+- [x] Sort-spec hashing (`SORT_MISMATCH`) and sort validation; tie-breaker uniqueness checked in `toPage`
+- [x] `buildKeysetCondition` AST (multi-column, per-field direction, nulls)
+- [x] `toPage` (limit + 1, backwards pagination, `pageInfo`) + internal `preparePagination` for adapters
+- [x] Unit + property-based tests (forward/backward walk, previous page, stability under inserts)
+- [x] ADR 0002 (cursor format and ordering semantics)
+
+Notes: core coverage 100% lines / 99.5% branches; core size 2.86 kB min+gzip (budget 3 kB).
+`CursorOptions` gained an optional `sort` field beyond the original spec (see ADR 0002).
 
 ## 3. Prisma adapter
 

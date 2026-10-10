@@ -14,6 +14,16 @@ requests. Keyset pagination fixes both by continuing from the last row you saw, 
 multi-column sorts, ties, nulls and tamper-proof cursors right is fiddly. `keyset-kit` handles
 all of that in a few lines of code.
 
+## Features
+
+- **Correct under change**: no duplicates or skipped rows when data is inserted between requests.
+- **Multi-column sorts** with per-field direction, ties broken by a unique field.
+- **Null-aware ordering** (`nulls: 'first' | 'last'`), with PostgreSQL defaults.
+- **Typed cursors**: Dates, bigints and decimals survive the round trip.
+- **Tamper-proof cursors** (optional HMAC-SHA256 signing) that can't be reused under a different sort.
+- **Forward and backward** pagination; `limit + 1` fetch, no count query.
+- **Zero runtime dependencies**, fully typed: sort fields are checked against your model.
+
 ## Install
 
 ```sh
@@ -51,6 +61,7 @@ pnpm size            # size-limit (core ≤ 3 kB min+gzip)
 ## Design decisions
 
 - [ADR 0001: Build and language toolchain](docs/adr/0001-toolchain.md): why TypeScript 6 + tsup, Node ≥ 22, and pnpm's supply-chain guards.
+- [ADR 0002: Cursor format, signing and ordering](docs/adr/0002-cursor-format-and-ordering.md): what's in a cursor, how signing and sort binding work, and how nulls and ties are ordered.
 
 ## Author
 
