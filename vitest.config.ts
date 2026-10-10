@@ -2,12 +2,30 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['test/unit/**/*.test.ts'],
-    typecheck: {
-      enabled: true,
-      include: ['test/types/**/*.test-d.ts'],
-      tsconfig: './tsconfig.json',
-    },
+    projects: [
+      {
+        test: {
+          name: 'unit',
+          include: ['test/unit/**/*.test.ts'],
+          typecheck: {
+            enabled: true,
+            include: ['test/types/**/*.test-d.ts'],
+            tsconfig: './tsconfig.json',
+          },
+        },
+      },
+      {
+        // Real databases started by Testcontainers (Docker required).
+        test: {
+          name: 'integration',
+          include: ['test/integration/**/*.test.ts'],
+          testTimeout: 120_000,
+          hookTimeout: 180_000,
+        },
+      },
+    ],
+    // Thresholds apply to the combined unit + integration run (`pnpm test:coverage`):
+    // some adapter paths are only meaningful against a real database.
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
