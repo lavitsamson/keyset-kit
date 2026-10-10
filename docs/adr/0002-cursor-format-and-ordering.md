@@ -75,6 +75,29 @@ null placement. The tie-breaker (last field) is non-null by contract, so it neve
 `IS NULL` branch, which keeps that comparison index-friendly. `before` reverses every field's
 direction and null placement, and `toPage` restores the requested order.
 
+### Leading bound (found by the benchmarks)
+
+The first benchmark run showed that with a matching composite index, keyset pagination was no
+faster than OFFSET: 124 ms vs 110 ms at page 10,000 of 1,000,000 rows. `EXPLAIN ANALYZE` showed
+an index scan with `Rows Removed by Filter: 199980`. PostgreSQL can't use an `OR` of `AND`s as an
+index range, so it walked the index from the start and filtered every earlier row, which is exactly
+the work keyset pagination exists to avoid.
+
+The condition now ANDs a redundant bound on the first field in front of the expansion:
+`a <= x AND ((a < x) OR (a = x AND id < z))` for a descending `a`. The bound becomes the
+`Index Cond`, and the same query reads 25 buffers instead of 200,758 (0.1 ms). It's added to the
+ORM-agnostic AST, so every adapter gets it, and `KeysetCompareCondition` gained `gte` and `lte`.
+Row-value comparison (`(a, id) < (x, z)`) would be tighter in PostgreSQL, but it only works when
+every field has the same direction and no nulls are involved, and Prisma can't express it.
+
+The bound is only added when it's exact: the cursor's first value is non-null and nulls sort
+before it. When nulls sort after the cursor (an ascending field with PostgreSQL's default
+`nulls: 'last'`, or paging backwards through a descending one), the rows after it include
+`a IS NULL`. No index range covers `a >= x OR a IS NULL`, and PostgreSQL 18 doesn't simplify that
+`IS NULL` away inside an `OR`, even on a `NOT NULL` column. Those queries stay correct but still
+filter through the index, so their cost grows with depth. Fixing that needs to know which sort
+columns can't be null, which a sort spec doesn't carry today.
+
 ### Tie-breaker validation
 
 Whether a column is unique can't be seen from a sort spec. `toPage` checks what it can: it throws
@@ -93,5 +116,7 @@ approximation the Relay connection spec allows. That avoids a second query.
   `secret`. The docs recommend it for public APIs.
 - Correctness is checked by property-based tests: random datasets with duplicates and nulls and
   random sort specs, walked forwards and backwards, with inserts between requests.
-- The core is 2.86 kB min+gzip against a 3 kB budget. Most of that is actionable error text,
+- Query plans are checked by the benchmarks (`bench/`), which run each strategy's exact SQL under
+  `EXPLAIN ANALYZE` on 1,000,000 rows.
+- The core is 2.96 kB min+gzip against a 3 kB budget. Most of that is actionable error text,
   which we keep on purpose. Adapters are separate entry points and don't count toward it.

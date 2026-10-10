@@ -74,8 +74,15 @@ Repository: https://github.com/lavitsamson/keyset-kit (docs: https://lavitsamson
 
 ## 8. Benchmarks
 
-- [ ] 1M-row dataset, OFFSET vs keyset at depths 1/100/1k/10k, `EXPLAIN ANALYZE`
-- [ ] `bench/RESULTS.md` (measured only) embedded in README
+- [x] 1M-row dataset, OFFSET vs keyset at depths 1/100/1k/10k, `EXPLAIN ANALYZE`
+- [x] `bench/RESULTS.md` (measured only) embedded in README
+
+Notes: the first run showed keyset no faster than OFFSET with a matching index (an OR can't be an
+index range). The condition now carries a leading bound on the first sort field; page 10,000 went
+from 124 ms to 2.3 ms (ADR 0002). Still open: ascending sorts with default nulls, and backwards
+paging on descending sorts, need an `IS NULL` branch and aren't range scans (documented in
+"Sorting & nulls"). `pnpm bench` writes `bench/RESULTS.md` and the README section; numbers are
+never edited by hand.
 
 ## 9. Release 1.0.0
 

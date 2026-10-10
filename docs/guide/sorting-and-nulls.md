@@ -29,6 +29,11 @@ OR (a = x AND b = y AND id > z)
 Descending fields use `<`. For `before`, every field's direction and null placement is reversed,
 the query fetches rows in that reversed order, and the page is flipped back before it's returned.
 
+When no nulls can follow the cursor in the first field, a redundant bound on that field is ANDed
+in front: `a >= x AND (...)` here, or `a <= x` for a descending field. It doesn't change the result.
+It lets the database use an index: PostgreSQL can't turn an `OR` into an index range, so without
+the bound it walks the index from the beginning and filters, which is as slow as OFFSET.
+
 ## Null ordering
 
 | Database   | Default (no `nulls` option)                    | Can you change it?              |
@@ -61,4 +66,14 @@ Create one index that matches the default sort, column order and directions incl
 CREATE INDEX post_created_at_id_idx ON post (created_at DESC, id);
 ```
 
-Each page is then an index range scan, whatever the page depth.
+Each page is then an index range scan that reads about `limit + 1` rows, whatever the page depth,
+as long as no nulls can follow the cursor in the first sort field: a descending first field with
+PostgreSQL's default null order, paged forwards (the usual "newest first" feed), or an ascending
+first field with `nulls: 'first'`.
+
+In the other cases (an ascending first field with the default `nulls: 'last'`, or paging
+**backwards** through a descending one) the condition needs a `first_field IS NULL` branch, so no
+single index range covers it. PostgreSQL then filters through the index from the start, and the
+cost grows with depth. This applies even when the column is `NOT NULL`, because the sort spec
+doesn't tell `keyset-kit` that. Check deep pages with `EXPLAIN ANALYZE` and look for
+`Index Cond` on the first sort column.

@@ -24,7 +24,8 @@ LIMIT 21;                            -- one extra row: is there a next page?
 
 With an index on `(created_at, id)` the database jumps straight to the right place and reads only
 21 rows, on page 1 and on page 10,000. Inserted and deleted rows can't shift a page, because the
-position is a value, not a count.
+position is a value, not a count. The [benchmarks](https://github.com/lavitsamson/keyset-kit/blob/main/bench/RESULTS.md)
+measure both strategies on a 1,000,000-row PostgreSQL table, with the query plans.
 
 ![OFFSET reads and discards every earlier row; keyset seeks to the cursor through the index and reads only the page.](/offset-vs-keyset.svg)
 
