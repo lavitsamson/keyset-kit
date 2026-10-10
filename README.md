@@ -36,7 +36,7 @@ _Coming in Milestone 3 (Express + Prisma example)._
 
 ## Development
 
-Supports Node ≥ 22. Development uses Node 24 LTS (pinned in `.node-version`; [fnm](https://github.com/Schniz/fnm) picks it up automatically) and pnpm via Corepack (`corepack enable`).
+Supports Node ≥ 22. Development uses Node 24 LTS (pinned in `.node-version`; [fnm](https://github.com/Schniz/fnm) picks it up automatically) and pnpm via Corepack (`corepack enable`; Corepack ships with Node 22 and 24).
 
 ```sh
 pnpm install

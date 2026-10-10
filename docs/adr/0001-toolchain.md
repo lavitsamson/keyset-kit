@@ -21,7 +21,7 @@ through the TypeScript JavaScript compiler API, which the native TypeScript 7 bu
   `./typeorm`, `./mongoose`, `./express`). tsup's declaration worker sets `baseUrl` internally,
   which TypeScript 6 deprecates, so the dts build only sets `ignoreDeprecations: "6.0"`. The
   project's own `tsconfig.json` doesn't silence anything.
-- **Node >= 22** for consumers: Node 20 reached end-of-life in April 2026. CI tests every supported LTS line (22, 24). Development uses Node 24 (Active LTS), pinned in `.node-version`. `@types/node` tracks the oldest supported line (22) so the code can't use APIs that Node 22 lacks.
+- **Node >= 22** for consumers: Node 20 reached end-of-life in April 2026. CI tests every supported LTS line (22, 24). Development uses Node 24 (Active LTS), pinned in `.node-version`. `@types/node` tracks the oldest supported line (22) so the code can't use APIs that Node 22 lacks. For the same reason, the compile target and `lib` are **ES2023**, which Node 22 fully implements (`toSorted`, `findLast` and similar).
 - **attw `node16` profile**: the legacy `node10` resolution mode can't read subpath `exports`,
   and no supported Node or TypeScript setup that can run this package still uses it.
 - **pnpm `minimumReleaseAge: 20160`** (14 days) and `allowBuilds` (only esbuild may run install

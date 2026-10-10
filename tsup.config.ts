@@ -11,7 +11,7 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   // tsup's dts worker sets `baseUrl` internally, which TypeScript 6 deprecates (see ADR 0001).
   dts: { compilerOptions: { ignoreDeprecations: '6.0' } },
-  target: 'es2022',
+  target: 'es2023', // fully supported by Node 22, the minimum supported runtime
   platform: 'node',
   sourcemap: true,
   clean: true,
