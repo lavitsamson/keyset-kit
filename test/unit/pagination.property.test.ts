@@ -10,10 +10,12 @@ interface Item {
   b: string | null;
   c: Date | null;
   d: bigint | null;
+  /** Never null, so sorts may declare it `nullable: false`. */
+  e: number;
 }
 
 type Nulls = 'first' | 'last' | undefined;
-const FIELDS = ['a', 'b', 'c', 'd'] as const;
+const FIELDS = ['a', 'b', 'c', 'd', 'e'] as const;
 
 // Few distinct values per column, so duplicates and nulls are common.
 const columnsArb = fc.record({
@@ -24,6 +26,7 @@ const columnsArb = fc.record({
     { nil: null },
   ),
   d: fc.option(fc.bigInt({ min: 0n, max: 3n }), { nil: null }),
+  e: fc.integer({ min: 0, max: 4 }),
 });
 
 const withIds = (rows: Omit<Item, 'id'>[], start = 1): Item[] =>
@@ -35,20 +38,24 @@ const directionArb = fc.constantFrom<SortDirection>('asc', 'desc');
 const nullsArb = fc.constantFrom<Nulls>(undefined, 'first', 'last');
 
 // Random subset/order of the non-unique columns, each with random direction and nulls,
-// always ending with the unique `id` tie-breaker.
+// always ending with the unique `id` tie-breaker. The never-null `e` is sometimes declared
+// `nullable: false`, which drops its IS NULL branches.
 const sortArb = fc
   .tuple(
     fc.shuffledSubarray([...FIELDS]),
-    fc.array(directionArb, { minLength: 5, maxLength: 5 }),
-    fc.array(nullsArb, { minLength: 5, maxLength: 5 }),
+    fc.array(directionArb, { minLength: 6, maxLength: 6 }),
+    fc.array(nullsArb, { minLength: 6, maxLength: 6 }),
+    fc.boolean(),
   )
-  .map(([fields, directions, nulls]): SortField<Item>[] => {
+  .map(([fields, directions, nulls, declareNonNull]): SortField<Item>[] => {
     const spec = fields.map((field, i): SortField<Item> => {
       const direction = directions[i] ?? 'asc';
       const n = nulls[i];
-      return n === undefined ? { field, direction } : { field, direction, nulls: n };
+      const s: SortField<Item> =
+        n === undefined ? { field, direction } : { field, direction, nulls: n };
+      return field === 'e' && declareNonNull ? { ...s, nullable: false } : s;
     });
-    return [...spec, { field: 'id', direction: directions[4] ?? 'asc' }];
+    return [...spec, { field: 'id', direction: directions[5] ?? 'asc' }];
   });
 
 const secretArb = fc.option(fc.string({ minLength: 1, maxLength: 12 }), { nil: undefined });

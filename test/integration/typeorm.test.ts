@@ -1,6 +1,12 @@
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { DataSource, EntitySchema, type Repository } from 'typeorm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import {
+  DataSource,
+  EntitySchema,
+  SelectQueryBuilder,
+  type ObjectLiteral,
+  type Repository,
+} from 'typeorm';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Page, PaginateOptions, SortField } from '../../src/index.js';
 import { paginateQueryBuilder } from '../../src/typeorm/index.js';
 import { runConformanceSuite, type ConformanceTarget, type Item } from './conformance.js';
@@ -168,6 +174,55 @@ describe('TypeORM specifics', () => {
     expect(page.data.map((r) => r.id)).toEqual([1, 2]);
     expect(page.data.every((r) => r.tags?.length === 3)).toBe(true);
     expect(page.pageInfo.hasNextPage).toBe(true);
+  });
+
+  it('treats NOT NULL columns as non-nullable, so ascending pages need no IS NULL branch', async () => {
+    await target.reset([row(1, 1, 'x')]);
+    const tags = dataSource.getRepository(TagSchema);
+    await tags.insert(
+      ['b', 'a', 'c', 'a', 'b'].map((label) => ({ label, item: { id: 1 } as ItemRow })),
+    );
+    const byLabel: SortField<TagRow>[] = [
+      { field: 'label', direction: 'asc' },
+      { field: 'id', direction: 'asc' },
+    ];
+    const getMany = vi.spyOn(SelectQueryBuilder.prototype, 'getMany');
+    const lastSql = (): string =>
+      (getMany.mock.contexts.at(-1) as SelectQueryBuilder<ObjectLiteral>).getQuery();
+    try {
+      const first = await paginateQueryBuilder(tags.createQueryBuilder('tag'), 'tag', {
+        sort: byLabel,
+        limit: 2,
+      });
+      const second = await paginateQueryBuilder(tags.createQueryBuilder('tag'), 'tag', {
+        sort: byLabel,
+        limit: 2,
+        after: first.pageInfo.endCursor,
+      });
+      expect(lastSql()).toContain('"tag"."label" >=');
+      expect(lastSql()).not.toContain('IS NULL');
+
+      const back = await paginateQueryBuilder(tags.createQueryBuilder('tag'), 'tag', {
+        sort: byLabel,
+        limit: 2,
+        before: second.pageInfo.startCursor,
+      });
+      expect(lastSql()).not.toContain('IS NULL');
+      expect(first.data.map((t) => t.label)).toEqual(['a', 'a']);
+      expect(second.data.map((t) => t.label)).toEqual(['b', 'b']);
+      expect(back.data.map((t) => t.id)).toEqual(first.data.map((t) => t.id));
+
+      // A nullable column keeps its IS NULL branch.
+      const page = await paginateQueryBuilder(items.createQueryBuilder('item'), 'item', {
+        sort: byA,
+        after: (await paginateQueryBuilder(items.createQueryBuilder('item'), 'item', { sort: byA }))
+          .pageInfo.endCursor,
+      });
+      expect(page.data).toEqual([]);
+      expect(lastSql()).toContain('IS NULL');
+    } finally {
+      getMany.mockRestore();
+    }
   });
 
   it('does not modify the caller query builder', async () => {

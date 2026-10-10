@@ -1,4 +1,4 @@
-import { buildResolvedCondition } from './condition.js';
+import { buildResolvedCondition, nullInNonNullable } from './condition.js';
 import { decodeResolved, encodeResolved } from './cursor.js';
 import { resolveSort, reverseSort, type NullOrder, type ResolvedSortField } from './sort.js';
 import type { KeysetCondition, Page, PaginateOptions, PaginationDirection } from './types.js';
@@ -123,8 +123,9 @@ function positiveInteger(name: string, value: number): number {
 }
 
 /**
- * Keyset pagination needs a total order, so the last sort field must be unique and non-null.
- * The schema isn't visible here, so check what we can: no nulls and no repeats within the rows.
+ * Keyset pagination needs a total order, so the last sort field must be unique and non-null, and
+ * fields declared `nullable: false` must hold no nulls. The schema isn't visible here, so check
+ * what we can: no nulls in those fields and no repeated tie-breaker within the rows.
  */
 function assertUniqueTieBreaker(
   rows: readonly unknown[],
@@ -135,13 +136,10 @@ function assertUniqueTieBreaker(
   if (field === undefined) return;
   const seen = new Set<string>();
   for (const row of rows) {
-    const value = read(row, field);
-    if (value === null || value === undefined) {
-      throw new TypeError(
-        `keyset-kit: a row has no "${field}". The last sort field must be unique, non-null and selected.`,
-      );
+    for (const s of sort) {
+      if (!s.nullable && read(row, s.field) == null) throw nullInNonNullable(s.field);
     }
-    const key = identity(value);
+    const key = identity(read(row, field));
     if (seen.has(key)) {
       throw new TypeError(
         `keyset-kit: two rows share "${field}"; end the sort with a unique field such as id.`,

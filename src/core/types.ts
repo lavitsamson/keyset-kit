@@ -19,6 +19,13 @@ export interface SortField<T> {
    * any value, so they come `last` ascending and `first` descending.
    */
   nulls?: 'first' | 'last' | undefined;
+  /**
+   * Set to `false` for a column that can never be null (`NOT NULL`). The keyset condition then
+   * skips `IS NULL` branches, so ascending sorts and backwards pages stay index range scans.
+   * Defaults to `true`, which is always correct. The TypeORM adapter detects `NOT NULL` columns
+   * itself; the last sort field is always treated as non-null.
+   */
+  nullable?: boolean | undefined;
 }
 
 /**
@@ -84,6 +91,8 @@ export interface AnySortField {
   direction: SortDirection;
   /** Where `null` values sort; omitted means the database's default. */
   nulls?: 'first' | 'last' | undefined;
+  /** `false` if the field can never be null. */
+  nullable?: boolean | undefined;
 }
 
 declare const parsedSortBrand: unique symbol;

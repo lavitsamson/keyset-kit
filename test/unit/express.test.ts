@@ -46,7 +46,7 @@ beforeAll(async () => {
     keysetParams<Post>({
       allowedSort: ['score'],
       defaultSort: [
-        { field: 'score', direction: 'asc', nulls: 'first' },
+        { field: 'score', direction: 'asc', nulls: 'first', nullable: false },
         { field: 'id', direction: 'asc' },
       ],
     }),
@@ -140,9 +140,9 @@ describe('keysetParams', () => {
     expect(body.sort).toEqual([{ field: 'id', direction: 'desc' }]);
   });
 
-  it('applies null ordering configured in defaultSort to client-chosen fields', async () => {
+  it('applies nulls and nullable configured in defaultSort to client-chosen fields', async () => {
     expect(await (await get('/nulls?sort=-score')).json()).toEqual([
-      { field: 'score', direction: 'desc', nulls: 'first' },
+      { field: 'score', direction: 'desc', nulls: 'first', nullable: false },
       { field: 'id', direction: 'asc' },
     ]);
   });

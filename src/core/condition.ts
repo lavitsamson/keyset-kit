@@ -40,18 +40,14 @@ export function buildResolvedCondition(
   const disjuncts: KeysetCondition[] = [];
   const equalities: KeysetCondition[] = [];
 
-  sort.forEach((s, i) => {
+  sort.forEach((s) => {
     if (!Object.hasOwn(values, s.field) || values[s.field] === undefined) {
       throw new TypeError(`keyset-kit: cursor values are missing sort field "${s.field}".`);
     }
     const value = values[s.field];
-    if (value === null && i === sort.length - 1) {
-      throw new TypeError(
-        `keyset-kit: last sort field "${s.field}" is null; it must be unique and non-null (e.g. id).`,
-      );
-    }
+    if (value === null && !s.nullable) throw nullInNonNullable(s.field);
 
-    const after = strictlyAfter(s, value, i === sort.length - 1);
+    const after = strictlyAfter(s, value);
     if (after) disjuncts.push(all([...equalities, after]));
     equalities.push(
       value === null
@@ -70,10 +66,10 @@ export function buildResolvedCondition(
  * A redundant range on the first sort field (`a >= x`, or `a <= x` descending), ANDed in front of
  * the expansion. Databases can't use an OR of ANDs as an index range, so without it they walk the
  * index from the start and filter, which is as slow as OFFSET. Added only when every matching row
- * satisfies it: the cursor value is non-null and no nulls sort after it.
+ * satisfies it: the cursor value is non-null and no nulls can sort after it.
  */
 function leadingBound(s: ResolvedSortField, value: unknown): KeysetCondition | null {
-  if (value === null || s.nulls === 'last') return null;
+  if (value === null || (s.nullable && s.nulls === 'last')) return null;
   return {
     type: 'compare',
     field: s.field,
@@ -84,14 +80,10 @@ function leadingBound(s: ResolvedSortField, value: unknown): KeysetCondition | n
 
 /**
  * Rows whose value for this one field comes strictly after `value`, or `null` if none can.
- * The tie-breaker (last field) is non-null by contract, so it never gets an IS NULL branch,
- * which keeps the final comparison index-friendly.
+ * Non-nullable fields (the tie-breaker, or declared `nullable: false`) never get an IS NULL
+ * branch, which keeps their comparisons index-friendly.
  */
-function strictlyAfter(
-  s: ResolvedSortField,
-  value: unknown,
-  isTieBreaker: boolean,
-): KeysetCondition | null {
+function strictlyAfter(s: ResolvedSortField, value: unknown): KeysetCondition | null {
   if (value === null) {
     // Nothing sorts after a trailing null; every non-null value sorts after a leading null.
     return s.nulls === 'first' ? { type: 'null', field: s.field, isNull: false } : null;
@@ -102,9 +94,17 @@ function strictlyAfter(
     operator: s.direction === 'asc' ? 'gt' : 'lt',
     value,
   };
-  return s.nulls === 'last' && !isTieBreaker
+  return s.nullable && s.nulls === 'last'
     ? any([compare, { type: 'null', field: s.field, isNull: true }])
     : compare;
+}
+
+/** @internal A null where the sort spec promises none: the tie-breaker or `nullable: false`. */
+export function nullInNonNullable(field: string): TypeError {
+  return new TypeError(
+    `keyset-kit: "${field}" is null or missing, but it is the last sort field or declared ` +
+      'nullable: false. Select it; end the sort with a unique field such as id; only mark NOT NULL columns.',
+  );
 }
 
 function all(conditions: KeysetCondition[]): KeysetCondition {

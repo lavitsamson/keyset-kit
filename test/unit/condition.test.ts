@@ -102,6 +102,39 @@ describe('buildKeysetCondition', () => {
     });
   });
 
+  describe('nullable: false', () => {
+    // Without nulls there is no IS NULL branch, so the bound applies in every direction.
+    it('drops the IS NULL branch and adds the bound for an ascending field', () => {
+      const sort: SortField<Row>[] = [
+        { field: 'a', direction: 'asc', nullable: false },
+        { field: 'id', direction: 'asc' },
+      ];
+      expect(buildKeysetCondition(sort, { a: 5, id: 1 }, 'after')).toEqual(
+        and(gte('a', 5), or(gt('a', 5), and(eq('a', 5), gt('id', 1)))),
+      );
+    });
+
+    it('keeps the bound when paging backwards through a descending field', () => {
+      const sort: SortField<Row>[] = [
+        { field: 'a', direction: 'desc', nullable: false },
+        { field: 'id', direction: 'desc' },
+      ];
+      expect(buildKeysetCondition(sort, { a: 5, id: 2 }, 'before')).toEqual(
+        and(gte('a', 5), or(gt('a', 5), and(eq('a', 5), gt('id', 2)))),
+      );
+    });
+
+    it('rejects a null cursor value for a field declared non-null', () => {
+      const sort: SortField<Row>[] = [
+        { field: 'a', direction: 'asc', nullable: false },
+        { field: 'id', direction: 'asc' },
+      ];
+      expect(() => buildKeysetCondition(sort, { a: null, id: 1 }, 'after')).toThrow(
+        /"a" is null or missing, but it is the last sort field or declared nullable: false/,
+      );
+    });
+  });
+
   it('returns a bare comparison for a single-field sort', () => {
     expect(buildKeysetCondition([{ field: 'id', direction: 'asc' }], { id: 3 }, 'after')).toEqual(
       gt('id', 3),
@@ -175,6 +208,6 @@ describe('buildKeysetCondition', () => {
   it('rejects a null tie-breaker value', () => {
     expect(() =>
       buildKeysetCondition([{ field: 'id', direction: 'asc' }], { id: null }, 'after'),
-    ).toThrow(/last sort field "id" is null/);
+    ).toThrow(/"id" is null or missing, but it is the last sort field/);
   });
 });

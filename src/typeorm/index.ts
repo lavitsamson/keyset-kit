@@ -1,7 +1,7 @@
 import type { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 import { preparePagination, toPage } from '../core/page.js';
-import { hasDefaultNulls, type ResolvedSortField } from '../core/sort.js';
-import type { KeysetCondition, Page, PaginateOptions } from '../core/types.js';
+import { hasDefaultNulls, resolveSort, type ResolvedSortField } from '../core/sort.js';
+import type { AnySortField, KeysetCondition, Page, PaginateOptions } from '../core/types.js';
 
 const OPERATORS = { gt: '>', gte: '>=', lt: '<', lte: '<=', eq: '=' } as const;
 const PARAM_PREFIX = 'keyset_kit_';
@@ -13,6 +13,8 @@ const PARAM_PREFIX = 'keyset_kit_';
  * ANDed with the keyset condition, so `.where(a).orWhere(b)` keeps its meaning. Any existing
  * `ORDER BY` is replaced by `options.sort`. Rows are limited with `take`, which stays correct when
  * one-to-many relations are joined. Sort fields must be properties of the entity behind `alias`.
+ * Sort fields on `NOT NULL` columns of the main entity are treated as `nullable: false`
+ * automatically, so their conditions stay index-friendly in both directions.
  *
  * @example
  * ```ts
@@ -34,8 +36,9 @@ export async function paginateQueryBuilder<T extends ObjectLiteral>(
   alias: string,
   options: PaginateOptions<T>,
 ): Promise<Page<T>> {
-  const prepared = preparePagination(options);
   const query = qb.clone();
+  const resolved = withColumnNullability(query, alias, options);
+  const prepared = preparePagination(resolved);
   const column = columnResolver(query, alias, prepared.sort);
 
   prepared.sort.forEach((s, i) => {
@@ -62,7 +65,30 @@ export async function paginateQueryBuilder<T extends ObjectLiteral>(
     query.andWhere(`(${sql})`, parameters);
   }
 
-  return toPage(await query.take(prepared.take).getMany(), options);
+  return toPage(await query.take(prepared.take).getMany(), resolved);
+}
+
+/**
+ * Marks sort fields backed by `NOT NULL` columns as `nullable: false`, so their conditions need no
+ * `IS NULL` branches and stay index range scans. Only for the query's main alias: a joined
+ * entity's `NOT NULL` column can still come back null through a LEFT JOIN. A `nullable` the
+ * caller set is kept.
+ */
+function withColumnNullability<T extends ObjectLiteral>(
+  query: SelectQueryBuilder<T>,
+  alias: string,
+  options: PaginateOptions<T>,
+): PaginateOptions<T> {
+  const main = query.expressionMap.mainAlias;
+  if (main?.name !== alias || !main.hasMetadata) return options;
+  resolveSort(options.sort); // validate first, for the usual actionable errors
+  const sort = options.sort.map((s: AnySortField) =>
+    s.nullable === undefined &&
+    main.metadata.findColumnWithPropertyPath(s.field)?.isNullable === false
+      ? { ...s, nullable: false }
+      : s,
+  );
+  return { ...options, sort };
 }
 
 /**

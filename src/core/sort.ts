@@ -13,6 +13,8 @@ export interface ResolvedSortField {
   nulls: 'first' | 'last';
   /** Whether `nulls` was set by the caller. Only declared options are part of the sort hash. */
   explicitNulls: boolean;
+  /** `false` for the tie-breaker and fields declared `nullable: false`. Not part of the hash. */
+  nullable: boolean;
 }
 
 /**
@@ -61,6 +63,8 @@ export function resolveSort(
       direction,
       nulls: nulls ?? (nullsLast ? 'last' : 'first'),
       explicitNulls: nulls !== undefined,
+      // Anything but an explicit `false` keeps the always-correct nullable conditions.
+      nullable: i < sort.length - 1 && s.nullable !== false,
     };
   });
 }
@@ -70,7 +74,8 @@ export function resolveSort(
  * Adapters then omit an explicit NULLS clause, which keeps queries portable and index-friendly.
  */
 export function hasDefaultNulls(s: ResolvedSortField): boolean {
-  return s.nulls === (s.direction === 'asc' ? 'last' : 'first');
+  // Null placement is irrelevant for a column without nulls; a plain direction matches any index.
+  return !s.nullable || s.nulls === (s.direction === 'asc' ? 'last' : 'first');
 }
 
 /** The exact reverse ordering, used to fetch the page before a cursor. */

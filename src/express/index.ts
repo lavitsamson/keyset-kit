@@ -8,7 +8,10 @@ import type { AnySortField, PageInfo, ParsedSort, SortField } from '../core/type
 export interface KeysetParamsConfig<T = Record<string, unknown>> {
   /** Fields clients may sort by with `?sort=`. */
   allowedSort: readonly (keyof T & string)[];
-  /** Used when `?sort=` is absent. Its last field is the unique tie-breaker for every sort. */
+  /**
+   * Used when `?sort=` is absent. Its last field is the unique tie-breaker for every sort. A field's
+   * `nulls` and `nullable` options here also apply when a client sorts by that field.
+   */
   defaultSort: readonly SortField<T>[];
   /** Upper bound for `?limit=`; larger values are clamped. Defaults to 100. */
   maxLimit?: number | undefined;
@@ -89,8 +92,14 @@ export function keysetParams<T = Record<string, unknown>>(
   const defaultSort: AnySortField[] = [...config.defaultSort];
   const tieBreaker = defaultSort[defaultSort.length - 1];
   if (tieBreaker === undefined) throw new TypeError('keyset-kit: `defaultSort` must not be empty.');
-  const configuredNulls = new Map(
-    defaultSort.flatMap((s) => (s.nulls === undefined ? [] : [[s.field, s.nulls] as const])),
+  // `nulls` and `nullable` declared in defaultSort also apply when a client sorts by that field.
+  const configured = new Map(
+    defaultSort.map((s) => {
+      const options: Pick<AnySortField, 'nulls' | 'nullable'> = {};
+      if (s.nulls !== undefined) options.nulls = s.nulls;
+      if (s.nullable !== undefined) options.nullable = s.nullable;
+      return [s.field, options] as const;
+    }),
   );
   const allowed = new Set<string>(config.allowedSort);
   if (
@@ -133,10 +142,7 @@ export function keysetParams<T = Record<string, unknown>>(
       const tieIndex = parsed.findIndex((s) => s.field === tieBreaker.field);
       // Nothing after a unique field affects the order, and the core expects it to be last.
       sort = tieIndex === -1 ? [...parsed, tieBreaker] : parsed.slice(0, tieIndex + 1);
-      sort = sort.map((s) => {
-        const nulls = configuredNulls.get(s.field);
-        return nulls === undefined ? s : { ...s, nulls };
-      });
+      sort = sort.map((s) => ({ ...s, ...configured.get(s.field) }));
     }
 
     const cursor = after ?? before;

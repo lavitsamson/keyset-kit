@@ -10,8 +10,8 @@ describe('resolveSort', () => {
     expect(
       resolveSort(spec({ field: 'a', direction: 'asc' }, { field: 'id', direction: 'desc' })),
     ).toEqual([
-      { field: 'a', direction: 'asc', nulls: 'last', explicitNulls: false },
-      { field: 'id', direction: 'desc', nulls: 'first', explicitNulls: false },
+      { field: 'a', direction: 'asc', nulls: 'last', explicitNulls: false, nullable: true },
+      { field: 'id', direction: 'desc', nulls: 'first', explicitNulls: false, nullable: false },
     ]);
   });
 
@@ -22,15 +22,25 @@ describe('resolveSort', () => {
         'smallest',
       ),
     ).toEqual([
-      { field: 'a', direction: 'asc', nulls: 'first', explicitNulls: false },
-      { field: 'id', direction: 'desc', nulls: 'last', explicitNulls: false },
+      { field: 'a', direction: 'asc', nulls: 'first', explicitNulls: false, nullable: true },
+      { field: 'id', direction: 'desc', nulls: 'last', explicitNulls: false, nullable: false },
     ]);
   });
 
   it('keeps an explicit nulls option', () => {
     expect(resolveSort(spec({ field: 'a', direction: 'asc', nulls: 'first' }), 'smallest')).toEqual(
-      [{ field: 'a', direction: 'asc', nulls: 'first', explicitNulls: true }],
+      [{ field: 'a', direction: 'asc', nulls: 'first', explicitNulls: true, nullable: false }],
     );
+  });
+
+  it('marks the tie-breaker and nullable: false fields as non-nullable; anything else stays nullable', () => {
+    const resolved = resolveSort([
+      { field: 'a', direction: 'asc', nullable: false },
+      { field: 'b', direction: 'asc', nullable: true },
+      { field: 'c', direction: 'asc', nullable: 'false' }, // JavaScript callers: only `false` counts
+      { field: 'id', direction: 'asc' },
+    ] as unknown as SortField<Row>[]);
+    expect(resolved.map((s) => s.nullable)).toEqual([false, true, true, false]);
   });
 
   it.each([
@@ -70,12 +80,12 @@ describe('reverseSort', () => {
   it('flips direction and null placement so the order is exactly reversed', () => {
     expect(
       reverseSort([
-        { field: 'a', direction: 'asc', nulls: 'last', explicitNulls: true },
-        { field: 'id', direction: 'desc', nulls: 'first', explicitNulls: false },
+        { field: 'a', direction: 'asc', nulls: 'last', explicitNulls: true, nullable: true },
+        { field: 'id', direction: 'desc', nulls: 'first', explicitNulls: false, nullable: false },
       ]),
     ).toEqual([
-      { field: 'a', direction: 'desc', nulls: 'first', explicitNulls: true },
-      { field: 'id', direction: 'asc', nulls: 'last', explicitNulls: false },
+      { field: 'a', direction: 'desc', nulls: 'first', explicitNulls: true, nullable: true },
+      { field: 'id', direction: 'asc', nulls: 'last', explicitNulls: false, nullable: false },
     ]);
   });
 });
@@ -89,6 +99,12 @@ describe('sortHash', () => {
       hash({ field: 'createdAt', direction: 'desc' }, { field: 'id', direction: 'asc' }),
     );
     expect(h).toMatch(/^[0-9a-z]{1,7}$/);
+  });
+
+  it('ignores nullable, which does not change the order', () => {
+    expect(
+      hash({ field: 'a', direction: 'asc', nullable: false }, { field: 'id', direction: 'asc' }),
+    ).toBe(hash({ field: 'a', direction: 'asc' }, { field: 'id', direction: 'asc' }));
   });
 
   it('is the same whichever database default fills in the nulls (PostgreSQL or MongoDB)', () => {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import { preparePagination } from '../../src/core/page.js';
 import {
   decodeCursor,
@@ -114,9 +114,19 @@ describe('toPage', () => {
     });
 
     it('rejects rows with a missing or null tie-breaker', () => {
-      expect(() => toPage([{ score: 1 } as Post], { sort })).toThrow(/a row has no "id"/);
+      expect(() => toPage([{ score: 1 } as Post], { sort })).toThrow(/"id" is null or missing/);
       expect(() => toPage([{ id: null, score: 1 } as unknown as Post], { sort })).toThrow(
-        /must be unique, non-null/,
+        /"id" is null or missing/,
+      );
+    });
+
+    it('rejects rows with a null in a field declared nullable: false', () => {
+      const strict: SortField<Post>[] = [
+        { field: 'score', direction: 'desc', nullable: false },
+        { field: 'id', direction: 'asc' },
+      ];
+      expect(() => toPage([{ id: 1, score: null } as unknown as Post], { sort: strict })).toThrow(
+        /"score" is null or missing, but it is the last sort field or declared nullable: false/,
       );
     });
 
@@ -146,8 +156,8 @@ describe('preparePagination', () => {
   it('has no condition on the first page and fetches limit + 1 rows', () => {
     expect(preparePagination({ sort, limit: 10 })).toEqual({
       sort: [
-        { field: 'score', direction: 'desc', nulls: 'first', explicitNulls: false },
-        { field: 'id', direction: 'asc', nulls: 'last', explicitNulls: false },
+        { field: 'score', direction: 'desc', nulls: 'first', explicitNulls: false, nullable: true },
+        { field: 'id', direction: 'asc', nulls: 'last', explicitNulls: false, nullable: false },
       ],
       where: null,
       take: 11,
@@ -184,8 +194,8 @@ describe('preparePagination', () => {
     const prepared = preparePagination({ sort, before });
     expect(prepared.direction).toBe('before');
     expect(prepared.sort).toEqual([
-      { field: 'score', direction: 'asc', nulls: 'last', explicitNulls: false },
-      { field: 'id', direction: 'desc', nulls: 'first', explicitNulls: false },
+      { field: 'score', direction: 'asc', nulls: 'last', explicitNulls: false, nullable: true },
+      { field: 'id', direction: 'desc', nulls: 'first', explicitNulls: false, nullable: false },
     ]);
   });
 
