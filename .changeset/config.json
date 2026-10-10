@@ -1,0 +1,6 @@
+{
+  "$schema": "../node_modules/@changesets/config/schema.json",
+  "baseBranch": "main",
+  "access": "public",
+  "changedFilePatterns": ["src/**", "package.json"]
+}
