@@ -12,6 +12,7 @@ export type SortDirection = 'asc' | 'desc';
 export interface SortField<T> {
   /** Model field to sort by. Inferred from the model type. */
   field: keyof T & string;
+  /** `'asc'` (smallest first) or `'desc'` (largest first). */
   direction: SortDirection;
   /**
    * Where `null` values sort. Defaults to PostgreSQL's behaviour: nulls count as larger than
@@ -54,15 +55,21 @@ export interface PaginateOptions<T> {
 
 /** Navigation metadata for a page. */
 export interface PageInfo {
+  /** More rows follow this page. When paginating backwards, true whenever a cursor was given. */
   hasNextPage: boolean;
+  /** Rows precede this page. When paginating forwards, true whenever a cursor was given. */
   hasPreviousPage: boolean;
+  /** Cursor of the first row; pass it as `before` for the previous page. `null` if empty. */
   startCursor: string | null;
+  /** Cursor of the last row; pass it as `after` for the next page. `null` if empty. */
   endCursor: string | null;
 }
 
 /** A page of results plus navigation metadata. */
 export interface Page<T> {
+  /** The rows of this page, in the requested order. */
   data: T[];
+  /** Cursors and whether neighbouring pages exist. */
   pageInfo: PageInfo;
 }
 
@@ -71,8 +78,11 @@ export interface Page<T> {
  * `SortField<T>` is contravariant in `T`, `SortField<Post>` is not assignable to `SortField<object>`.
  */
 export interface AnySortField {
+  /** Field to sort by. */
   field: string;
+  /** `'asc'` or `'desc'`. */
   direction: SortDirection;
+  /** Where `null` values sort; omitted means the database's default. */
   nulls?: 'first' | 'last' | undefined;
 }
 
@@ -83,7 +93,10 @@ declare const parsedSortBrand: unique symbol;
  * `keysetParams()` from `keyset-kit/express`. Its field names are plain strings, so the brand is
  * what lets it stand in for a model-typed sort. Hand-written arrays never carry it.
  */
-export type ParsedSort = readonly AnySortField[] & { readonly [parsedSortBrand]: true };
+export type ParsedSort = readonly AnySortField[] & {
+  /** Type-only brand; never present at runtime. */
+  readonly [parsedSortBrand]: true;
+};
 
 /** Options for `encodeCursor` and `decodeCursor`. */
 export interface CursorOptions {
@@ -101,14 +114,46 @@ export interface CursorOptions {
 export type PaginationDirection = 'after' | 'before';
 
 /**
- * ORM-agnostic description of "rows strictly past the cursor". Adapters translate it into
- * Prisma `where`, TypeORM brackets or a MongoDB filter.
- *
- * - `compare`: `field <operator> value`; never matches a row whose field is null.
- * - `null`: `field IS NULL` (`isNull: true`) or `field IS NOT NULL` (`isNull: false`).
+ * ORM-agnostic description of "rows strictly past the cursor", built by `buildKeysetCondition`.
+ * Adapters translate it into a Prisma `where`, TypeORM SQL or a MongoDB filter.
  */
 export type KeysetCondition =
-  | { type: 'and'; conditions: KeysetCondition[] }
-  | { type: 'or'; conditions: KeysetCondition[] }
-  | { type: 'compare'; field: string; operator: 'gt' | 'lt' | 'eq'; value: unknown }
-  | { type: 'null'; field: string; isNull: boolean };
+  KeysetAndCondition | KeysetOrCondition | KeysetCompareCondition | KeysetNullCondition;
+
+/** Matches when every child condition matches. */
+export interface KeysetAndCondition {
+  /** Node kind. */
+  type: 'and';
+  /** Conditions combined with AND. */
+  conditions: KeysetCondition[];
+}
+
+/** Matches when any child condition matches. */
+export interface KeysetOrCondition {
+  /** Node kind. */
+  type: 'or';
+  /** Conditions combined with OR. */
+  conditions: KeysetCondition[];
+}
+
+/** `field <operator> value`. Never matches a row whose field is null (SQL semantics). */
+export interface KeysetCompareCondition {
+  /** Node kind. */
+  type: 'compare';
+  /** Field to compare. */
+  field: string;
+  /** `gt` (>), `lt` (<) or `eq` (=). */
+  operator: 'gt' | 'lt' | 'eq';
+  /** Cursor value, as decoded (Date, bigint, string, number, boolean). */
+  value: unknown;
+}
+
+/** `field IS NULL` (`isNull: true`) or `field IS NOT NULL` (`isNull: false`). */
+export interface KeysetNullCondition {
+  /** Node kind. */
+  type: 'null';
+  /** Field to test. */
+  field: string;
+  /** `true` for IS NULL, `false` for IS NOT NULL. */
+  isNull: boolean;
+}

@@ -15,7 +15,9 @@ export type InvalidCursorCode = 'INVALID_CURSOR' | 'TAMPERED_CURSOR' | 'SORT_MIS
  * ```
  */
 export class InvalidCursorError extends Error {
+  /** Always `'InvalidCursorError'`. */
   override readonly name = 'InvalidCursorError';
+  /** Why the cursor was rejected. */
   readonly code: InvalidCursorCode;
 
   constructor(code: InvalidCursorCode, message: string) {

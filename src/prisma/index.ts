@@ -7,6 +7,7 @@ import type { KeysetCondition, Page, PaginateOptions } from '../core/types.js';
  * adapter works with every generated client without importing `@prisma/client`.
  */
 export interface PrismaDelegate<T> {
+  /** Prisma's `findMany`; called with `where`, `orderBy`, `take` and your `select`/`include`. */
   findMany(args: never): PromiseLike<T[]>;
 }
 
@@ -16,6 +17,7 @@ export interface PrismaPaginateArgs {
   where?: object;
   /** Must include every sort field. */
   select?: object;
+  /** Relations to load, passed through unchanged. */
   include?: object;
 }
 

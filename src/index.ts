@@ -6,7 +6,11 @@ export { toPage } from './core/page.js';
 export type {
   AnySortField,
   CursorOptions,
+  KeysetAndCondition,
+  KeysetCompareCondition,
   KeysetCondition,
+  KeysetNullCondition,
+  KeysetOrCondition,
   Page,
   PageInfo,
   PaginateOptions,
