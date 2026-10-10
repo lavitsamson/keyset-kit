@@ -1,6 +1,6 @@
 import { buildResolvedCondition } from './condition.js';
 import { decodeResolved, encodeResolved } from './cursor.js';
-import { resolveSort, reverseSort, type ResolvedSortField } from './sort.js';
+import { resolveSort, reverseSort, type NullOrder, type ResolvedSortField } from './sort.js';
 import type { KeysetCondition, Page, PaginateOptions, PaginationDirection } from './types.js';
 
 const DEFAULT_LIMIT = 20;
@@ -22,8 +22,11 @@ export interface PreparedPagination {
  * @internal Validates options, decodes the cursor and builds the keyset condition.
  * Adapters run the query with this, then hand the rows to `toPage`.
  */
-export function preparePagination<T>(options: PaginateOptions<T>): PreparedPagination {
-  const { sort, limit, direction } = resolveOptions(options);
+export function preparePagination<T>(
+  options: PaginateOptions<T>,
+  nullOrder: NullOrder = 'largest',
+): PreparedPagination {
+  const { sort, limit, direction } = resolveOptions(options, nullOrder);
   const cursor = direction === 'before' ? options.before : options.after;
   const querySort = direction === 'before' ? reverseSort(sort) : sort;
   const where =
@@ -48,7 +51,7 @@ export function preparePagination<T>(options: PaginateOptions<T>): PreparedPagin
  * ```
  */
 export function toPage<T>(rows: readonly T[], options: PaginateOptions<T>): Page<T> {
-  return buildPage(rows, options, readProperty);
+  return buildPage(rows, options, readProperty, 'largest');
 }
 
 /** @internal Reads a sort field from a row. Adapters can override it (MongoDB: missing → null). */
@@ -56,13 +59,14 @@ export type ReadField = (row: unknown, field: string) => unknown;
 
 const readProperty: ReadField = (row, field) => (row as Record<string, unknown>)[field];
 
-/** @internal `toPage` with a custom field reader. */
+/** @internal `toPage` with a custom field reader and the database's default null order. */
 export function buildPage<T>(
   rows: readonly T[],
   options: PaginateOptions<T>,
   read: ReadField,
+  nullOrder: NullOrder,
 ): Page<T> {
-  const { sort, limit, direction } = resolveOptions(options);
+  const { sort, limit, direction } = resolveOptions(options, nullOrder);
   assertUniqueTieBreaker(rows, sort, read);
 
   const hasMore = rows.length > limit;
@@ -89,7 +93,10 @@ export function buildPage<T>(
   };
 }
 
-function resolveOptions<T>(options: PaginateOptions<T>): {
+function resolveOptions<T>(
+  options: PaginateOptions<T>,
+  nullOrder: NullOrder,
+): {
   sort: ResolvedSortField[];
   limit: number;
   direction: PaginationDirection;
@@ -100,7 +107,7 @@ function resolveOptions<T>(options: PaginateOptions<T>): {
   const maxLimit = positiveInteger('maxLimit', options.maxLimit ?? DEFAULT_MAX_LIMIT);
   const limit = positiveInteger('limit', options.limit ?? DEFAULT_LIMIT);
   return {
-    sort: resolveSort(options.sort),
+    sort: resolveSort(options.sort, nullOrder),
     limit: Math.min(limit, maxLimit),
     direction: options.before != null ? 'before' : 'after',
   };

@@ -1,17 +1,28 @@
 import type { AnySortField, SortDirection } from './types.js';
 
+/**
+ * Where a database puts nulls for fields without an explicit `nulls` option.
+ * `largest`: PostgreSQL (last ascending, first descending). `smallest`: MongoDB (the reverse).
+ */
+export type NullOrder = 'largest' | 'smallest';
+
 /** A sort field whose null ordering has been made explicit. */
 export interface ResolvedSortField {
   field: string;
   direction: SortDirection;
   nulls: 'first' | 'last';
+  /** Whether `nulls` was set by the caller. Only declared options are part of the sort hash. */
+  explicitNulls: boolean;
 }
 
 /**
- * Validates a sort specification and resolves each field's null ordering.
- * Defaults follow PostgreSQL: nulls sort last ascending and first descending.
+ * Validates a sort specification and resolves each field's null ordering, using the database's
+ * default (`nullOrder`) where the caller did not set one.
  */
-export function resolveSort(sort: readonly AnySortField[]): ResolvedSortField[] {
+export function resolveSort(
+  sort: readonly AnySortField[],
+  nullOrder: NullOrder = 'largest',
+): ResolvedSortField[] {
   const input: unknown = sort; // JavaScript callers may pass anything
   if (!Array.isArray(input) || input.length === 0) {
     throw new TypeError(
@@ -26,9 +37,7 @@ export function resolveSort(sort: readonly AnySortField[]): ResolvedSortField[] 
       throw new TypeError(`keyset-kit: sort[${String(i)}].field must be a non-empty string.`);
     }
     if (seen.has(field)) {
-      throw new TypeError(
-        `keyset-kit: sort field "${field}" appears more than once; list each field once.`,
-      );
+      throw new TypeError(`keyset-kit: sort field "${field}" is listed twice.`);
     }
     seen.add(field);
 
@@ -46,7 +55,13 @@ export function resolveSort(sort: readonly AnySortField[]): ResolvedSortField[] 
       );
     }
 
-    return { field, direction, nulls: nulls ?? (direction === 'asc' ? 'last' : 'first') };
+    const nullsLast = (direction === 'asc') === (nullOrder === 'largest');
+    return {
+      field,
+      direction,
+      nulls: nulls ?? (nullsLast ? 'last' : 'first'),
+      explicitNulls: nulls !== undefined,
+    };
   });
 }
 
@@ -61,18 +76,22 @@ export function hasDefaultNulls(s: ResolvedSortField): boolean {
 /** The exact reverse ordering, used to fetch the page before a cursor. */
 export function reverseSort(sort: readonly ResolvedSortField[]): ResolvedSortField[] {
   return sort.map((s) => ({
-    field: s.field,
+    ...s,
     direction: s.direction === 'asc' ? 'desc' : 'asc',
     nulls: s.nulls === 'first' ? 'last' : 'first',
   }));
 }
 
 /**
- * Short, stable fingerprint of a resolved sort spec (32-bit FNV-1a, base36).
- * It detects cursors reused under a different sort; it is not a security measure.
+ * Short, stable fingerprint of a sort spec as declared (32-bit FNV-1a, base36). Defaults filled in
+ * for a particular database are left out, so the same declared sort hashes the same everywhere,
+ * for example in the Express middleware and in the Mongoose adapter. It detects cursors reused under
+ * a different sort; it is not a security measure.
  */
 export function sortHash(sort: readonly ResolvedSortField[]): string {
-  const canonical = JSON.stringify(sort.map((s) => [s.field, s.direction, s.nulls]));
+  const canonical = JSON.stringify(
+    sort.map((s) => [s.field, s.direction, s.explicitNulls ? s.nulls : null]),
+  );
   let hash = 0x811c9dc5;
   for (let i = 0; i < canonical.length; i++) {
     hash ^= canonical.charCodeAt(i);

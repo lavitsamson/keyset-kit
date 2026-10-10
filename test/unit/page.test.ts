@@ -146,8 +146,8 @@ describe('preparePagination', () => {
   it('has no condition on the first page and fetches limit + 1 rows', () => {
     expect(preparePagination({ sort, limit: 10 })).toEqual({
       sort: [
-        { field: 'score', direction: 'desc', nulls: 'first' },
-        { field: 'id', direction: 'asc', nulls: 'last' },
+        { field: 'score', direction: 'desc', nulls: 'first', explicitNulls: false },
+        { field: 'id', direction: 'asc', nulls: 'last', explicitNulls: false },
       ],
       where: null,
       take: 11,
@@ -178,8 +178,8 @@ describe('preparePagination', () => {
     const prepared = preparePagination({ sort, before });
     expect(prepared.direction).toBe('before');
     expect(prepared.sort).toEqual([
-      { field: 'score', direction: 'asc', nulls: 'last' },
-      { field: 'id', direction: 'desc', nulls: 'first' },
+      { field: 'score', direction: 'asc', nulls: 'last', explicitNulls: false },
+      { field: 'id', direction: 'desc', nulls: 'first', explicitNulls: false },
     ]);
   });
 

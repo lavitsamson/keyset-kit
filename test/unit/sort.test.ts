@@ -10,15 +10,27 @@ describe('resolveSort', () => {
     expect(
       resolveSort(spec({ field: 'a', direction: 'asc' }, { field: 'id', direction: 'desc' })),
     ).toEqual([
-      { field: 'a', direction: 'asc', nulls: 'last' },
-      { field: 'id', direction: 'desc', nulls: 'first' },
+      { field: 'a', direction: 'asc', nulls: 'last', explicitNulls: false },
+      { field: 'id', direction: 'desc', nulls: 'first', explicitNulls: false },
+    ]);
+  });
+
+  it("uses MongoDB's null order (smallest) when asked", () => {
+    expect(
+      resolveSort(
+        spec({ field: 'a', direction: 'asc' }, { field: 'id', direction: 'desc' }),
+        'smallest',
+      ),
+    ).toEqual([
+      { field: 'a', direction: 'asc', nulls: 'first', explicitNulls: false },
+      { field: 'id', direction: 'desc', nulls: 'last', explicitNulls: false },
     ]);
   });
 
   it('keeps an explicit nulls option', () => {
-    expect(resolveSort(spec({ field: 'a', direction: 'asc', nulls: 'first' }))).toEqual([
-      { field: 'a', direction: 'asc', nulls: 'first' },
-    ]);
+    expect(resolveSort(spec({ field: 'a', direction: 'asc', nulls: 'first' }), 'smallest')).toEqual(
+      [{ field: 'a', direction: 'asc', nulls: 'first', explicitNulls: true }],
+    );
   });
 
   it.each([
@@ -41,7 +53,7 @@ describe('resolveSort', () => {
   it('rejects a field listed twice', () => {
     expect(() =>
       resolveSort(spec({ field: 'id', direction: 'asc' }, { field: 'id', direction: 'desc' })),
-    ).toThrow(/"id" appears more than once/);
+    ).toThrow(/"id" is listed twice/);
   });
 
   it('rejects an invalid direction or nulls value with the offending value in the message', () => {
@@ -58,12 +70,12 @@ describe('reverseSort', () => {
   it('flips direction and null placement so the order is exactly reversed', () => {
     expect(
       reverseSort([
-        { field: 'a', direction: 'asc', nulls: 'last' },
-        { field: 'id', direction: 'desc', nulls: 'first' },
+        { field: 'a', direction: 'asc', nulls: 'last', explicitNulls: true },
+        { field: 'id', direction: 'desc', nulls: 'first', explicitNulls: false },
       ]),
     ).toEqual([
-      { field: 'a', direction: 'desc', nulls: 'first' },
-      { field: 'id', direction: 'asc', nulls: 'last' },
+      { field: 'a', direction: 'desc', nulls: 'first', explicitNulls: true },
+      { field: 'id', direction: 'asc', nulls: 'last', explicitNulls: false },
     ]);
   });
 });
@@ -79,8 +91,15 @@ describe('sortHash', () => {
     expect(h).toMatch(/^[0-9a-z]{1,7}$/);
   });
 
-  it('treats an explicit default nulls option as the same spec', () => {
-    expect(hash({ field: 'a', direction: 'asc', nulls: 'last' })).toBe(
+  it('is the same whichever database default fills in the nulls (PostgreSQL or MongoDB)', () => {
+    const declared = spec({ field: 'a', direction: 'asc' }, { field: 'id', direction: 'asc' });
+    expect(sortHash(resolveSort(declared, 'smallest'))).toBe(
+      sortHash(resolveSort(declared, 'largest')),
+    );
+  });
+
+  it('includes a declared nulls option, even one equal to the default', () => {
+    expect(hash({ field: 'a', direction: 'asc', nulls: 'last' })).not.toBe(
       hash({ field: 'a', direction: 'asc' }),
     );
   });

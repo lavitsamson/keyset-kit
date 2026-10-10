@@ -5,6 +5,7 @@ import express from 'express';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { keysetParams, setLinkHeader, type KeysetParamsConfig } from '../../src/express/index.js';
 import { encodeCursor, type SortField } from '../../src/index.js';
+import { buildPage } from '../../src/core/page.js';
 import { paginateMemory } from './helpers/memory.js';
 
 interface Post {
@@ -110,9 +111,10 @@ async function problem(path: string) {
 describe('keysetParams', () => {
   it('uses the default sort and leaves limit to the paginator when no parameters are given', async () => {
     expect(await (await get('/echo')).json()).toEqual({
+      // Passed on as declared; each adapter fills in its database's default null order.
       sort: [
-        { field: 'createdAt', direction: 'desc', nulls: 'first' },
-        { field: 'id', direction: 'asc', nulls: 'last' },
+        { field: 'createdAt', direction: 'desc' },
+        { field: 'id', direction: 'asc' },
       ],
       maxLimit: 50,
       after: null,
@@ -127,21 +129,21 @@ describe('keysetParams', () => {
     };
     expect(body.limit).toBe(10);
     expect(body.sort).toEqual([
-      { field: 'createdAt', direction: 'desc', nulls: 'first' },
+      { field: 'createdAt', direction: 'desc' },
       { field: 'title', direction: 'asc' },
-      { field: 'id', direction: 'asc', nulls: 'last' },
+      { field: 'id', direction: 'asc' },
     ]);
   });
 
   it('drops fields after the tie-breaker, since they cannot affect the order', async () => {
     const body = (await (await get('/echo?sort=-id,title')).json()) as { sort: SortField<Post>[] };
-    expect(body.sort).toEqual([{ field: 'id', direction: 'desc', nulls: 'last' }]);
+    expect(body.sort).toEqual([{ field: 'id', direction: 'desc' }]);
   });
 
   it('applies null ordering configured in defaultSort to client-chosen fields', async () => {
     expect(await (await get('/nulls?sort=-score')).json()).toEqual([
       { field: 'score', direction: 'desc', nulls: 'first' },
-      { field: 'id', direction: 'asc', nulls: 'last' },
+      { field: 'id', direction: 'asc' },
     ]);
   });
 
@@ -216,6 +218,18 @@ describe('keysetParams', () => {
     const res = await get(`/echo?after=${cursor}`);
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ after: cursor, before: null });
+  });
+
+  it('accepts cursors produced under a different database null order (e.g. MongoDB)', async () => {
+    const rows = posts.map((p) => ({ ...p }));
+    const mongoOrdered = buildPage(
+      rows,
+      { sort: defaultSort, limit: 3 },
+      (row, field) => (row as Record<string, unknown>)[field] ?? null,
+      'smallest',
+    );
+    const res = await get(`/echo?after=${mongoOrdered.pageInfo.endCursor ?? ''}`);
+    expect(res.status).toBe(200);
   });
 
   it('validates its configuration up front', () => {

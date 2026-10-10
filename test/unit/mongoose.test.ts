@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SortField } from '../../src/index.js';
-import { assertProjected, toMongoFilter, withMongoNullOrder } from '../../src/mongoose/index.js';
+import { assertMongoNulls, assertProjected, toMongoFilter } from '../../src/mongoose/index.js';
 
 type Row = Record<string, unknown>;
 
@@ -32,29 +32,27 @@ describe('toMongoFilter', () => {
   });
 });
 
-describe('withMongoNullOrder', () => {
-  it("fills in MongoDB's fixed null order (first ascending, last descending)", () => {
-    expect(
-      withMongoNullOrder<Row>([
+describe('assertMongoNulls', () => {
+  it("accepts omitted nulls and nulls matching MongoDB's fixed order", () => {
+    expect(() => {
+      assertMongoNulls([
         { field: 'a', direction: 'asc' },
-        { field: 'b', direction: 'desc' },
+        { field: 'b', direction: 'desc', nulls: 'last' },
         { field: 'id', direction: 'asc', nulls: 'first' },
-      ]),
-    ).toEqual([
-      { field: 'a', direction: 'asc', nulls: 'first' },
-      { field: 'b', direction: 'desc', nulls: 'last' },
-      { field: 'id', direction: 'asc', nulls: 'first' },
-    ]);
+      ]);
+    }).not.toThrow();
   });
 
   it('rejects a nulls option MongoDB cannot honour, naming the field', () => {
-    expect(() =>
-      withMongoNullOrder<Row>([{ field: 'a', direction: 'desc', nulls: 'first' }]),
-    ).toThrow(/sorts nulls last for 'desc', but "a" asks for nulls 'first'/);
+    expect(() => {
+      assertMongoNulls([{ field: 'a', direction: 'desc', nulls: 'first' }]);
+    }).toThrow(/sorts nulls last for 'desc', but "a" asks for nulls 'first'/);
   });
 
   it('validates the sort spec first', () => {
-    expect(() => withMongoNullOrder<Row>([] as SortField<Row>[])).toThrow(/non-empty array/);
+    expect(() => {
+      assertMongoNulls([] as SortField<Row>[]);
+    }).toThrow(/non-empty array/);
   });
 });
 

@@ -51,8 +51,8 @@ describe('toPrismaOrderBy', () => {
   it('emits plain directions when nulls match the PostgreSQL default', () => {
     expect(
       toPrismaOrderBy([
-        { field: 'a', direction: 'asc', nulls: 'last' },
-        { field: 'b', direction: 'desc', nulls: 'first' },
+        { field: 'a', direction: 'asc', nulls: 'last', explicitNulls: false },
+        { field: 'b', direction: 'desc', nulls: 'first', explicitNulls: false },
       ]),
     ).toEqual([{ a: 'asc' }, { b: 'desc' }]);
   });
@@ -60,8 +60,8 @@ describe('toPrismaOrderBy', () => {
   it('emits { sort, nulls } when the null placement is not the default', () => {
     expect(
       toPrismaOrderBy([
-        { field: 'a', direction: 'asc', nulls: 'first' },
-        { field: 'b', direction: 'desc', nulls: 'last' },
+        { field: 'a', direction: 'asc', nulls: 'first', explicitNulls: false },
+        { field: 'b', direction: 'desc', nulls: 'last', explicitNulls: false },
       ]),
     ).toEqual([{ a: { sort: 'asc', nulls: 'first' } }, { b: { sort: 'desc', nulls: 'last' } }]);
   });

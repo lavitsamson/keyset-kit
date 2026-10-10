@@ -18,17 +18,25 @@ export interface KeysetParamsConfig<T = Record<string, unknown>> {
 
 /** Validated pagination parameters, ready to spread into an adapter's options. */
 export interface KeysetQuery {
+  /** `?sort=` (or `defaultSort`), validated, with the tie-breaker appended. */
   sort: ParsedSort;
+  /** `?limit=`, or `undefined` to use the paginator's default. */
   limit: number | undefined;
+  /** `maxLimit` from the config. */
   maxLimit: number | undefined;
+  /** `?after=` cursor, already validated. */
   after: string | null;
+  /** `?before=` cursor, already validated. */
   before: string | null;
+  /** `secret` from the config. */
   secret: string | undefined;
 }
 
 /** One invalid query parameter, as listed in the Problem Details `errors` member. */
 export interface KeysetParamError {
+  /** The offending query parameter. */
   parameter: 'limit' | 'after' | 'before' | 'sort';
+  /** What is wrong and how to fix it. */
   detail: string;
 }
 
@@ -76,10 +84,14 @@ const POSITIVE_INTEGER = /^[1-9]\d*$/;
 export function keysetParams<T = Record<string, unknown>>(
   config: KeysetParamsConfig<T>,
 ): RequestHandler {
-  const defaultSort = resolveSort(config.defaultSort);
+  resolveSort(config.defaultSort); // validate up front
+  // Passed on as declared: each adapter fills in its own database's default null order.
+  const defaultSort: AnySortField[] = [...config.defaultSort];
   const tieBreaker = defaultSort[defaultSort.length - 1];
   if (tieBreaker === undefined) throw new TypeError('keyset-kit: `defaultSort` must not be empty.');
-  const configuredNulls = new Map(defaultSort.map((s) => [s.field, s.nulls]));
+  const configuredNulls = new Map(
+    defaultSort.flatMap((s) => (s.nulls === undefined ? [] : [[s.field, s.nulls] as const])),
+  );
   const allowed = new Set<string>(config.allowedSort);
   if (
     config.maxLimit !== undefined &&
