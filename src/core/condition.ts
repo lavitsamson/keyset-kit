@@ -6,7 +6,8 @@ import type { KeysetCondition, PaginationDirection, SortField } from './types.js
  *
  * For `a asc, b asc, id asc` and cursor `(x, y, z)` this expands to
  * `(a > x) OR (a = x AND b > y) OR (a = x AND b = y AND id > z)`, honouring each field's
- * direction and null ordering. With `'before'`, the whole ordering is reversed.
+ * direction and null ordering. With `'before'`, the whole ordering is reversed. When it is safe,
+ * a redundant bound on the first field (`a >= x`) is ANDed in front so an index can be used.
  *
  * @example
  * ```ts
@@ -15,7 +16,8 @@ import type { KeysetCondition, PaginationDirection, SortField } from './types.js
  *   decodeCursor(after),
  *   'after',
  * );
- * // { type: 'or', conditions: [ { type: 'compare', field: 'createdAt', operator: 'lt', ... }, ... ] }
+ * // createdAt <= x AND (createdAt < x OR (createdAt = x AND id > y)), as nested
+ * // { type: 'and' | 'or' | 'compare', ... } nodes
  * ```
  */
 export function buildKeysetCondition<T>(
@@ -58,7 +60,26 @@ export function buildResolvedCondition(
     );
   });
 
-  return any(disjuncts);
+  const condition = any(disjuncts);
+  const [first] = sort;
+  const bound = first && sort.length > 1 ? leadingBound(first, values[first.field]) : null;
+  return bound ? { type: 'and', conditions: [bound, condition] } : condition;
+}
+
+/**
+ * A redundant range on the first sort field (`a >= x`, or `a <= x` descending), ANDed in front of
+ * the expansion. Databases can't use an OR of ANDs as an index range, so without it they walk the
+ * index from the start and filter, which is as slow as OFFSET. Added only when every matching row
+ * satisfies it: the cursor value is non-null and no nulls sort after it.
+ */
+function leadingBound(s: ResolvedSortField, value: unknown): KeysetCondition | null {
+  if (value === null || s.nulls === 'last') return null;
+  return {
+    type: 'compare',
+    field: s.field,
+    operator: s.direction === 'asc' ? 'gte' : 'lte',
+    value,
+  };
 }
 
 /**

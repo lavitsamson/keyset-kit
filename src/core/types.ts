@@ -142,8 +142,8 @@ export interface KeysetCompareCondition {
   type: 'compare';
   /** Field to compare. */
   field: string;
-  /** `gt` (>), `lt` (<) or `eq` (=). */
-  operator: 'gt' | 'lt' | 'eq';
+  /** `gt` (>), `gte` (>=), `lt` (<), `lte` (<=) or `eq` (=). */
+  operator: 'gt' | 'gte' | 'lt' | 'lte' | 'eq';
   /** Cursor value, as decoded (Date, bigint, string, number, boolean). */
   value: unknown;
 }

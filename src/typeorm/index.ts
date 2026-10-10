@@ -3,7 +3,7 @@ import { preparePagination, toPage } from '../core/page.js';
 import { hasDefaultNulls, type ResolvedSortField } from '../core/sort.js';
 import type { KeysetCondition, Page, PaginateOptions } from '../core/types.js';
 
-const OPERATORS = { gt: '>', lt: '<', eq: '=' } as const;
+const OPERATORS = { gt: '>', gte: '>=', lt: '<', lte: '<=', eq: '=' } as const;
 const PARAM_PREFIX = 'keyset_kit_';
 
 /**

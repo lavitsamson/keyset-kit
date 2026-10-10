@@ -20,10 +20,16 @@ describe('toTypeormWhere', () => {
     );
 
     expect(sql).toBe(
-      '(item.createdAt < :keyset_kit_0) OR ' +
-        '((item.createdAt = :keyset_kit_1) AND (item.id > :keyset_kit_2))',
+      '(item.createdAt <= :keyset_kit_0) AND ' +
+        '((item.createdAt < :keyset_kit_1) OR ' +
+        '((item.createdAt = :keyset_kit_2) AND (item.id > :keyset_kit_3)))',
     );
-    expect(parameters).toEqual({ keyset_kit_0: at, keyset_kit_1: at, keyset_kit_2: 5 });
+    expect(parameters).toEqual({
+      keyset_kit_0: at,
+      keyset_kit_1: at,
+      keyset_kit_2: at,
+      keyset_kit_3: 5,
+    });
   });
 
   it('renders IS NULL and IS NOT NULL without parameters', () => {

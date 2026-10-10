@@ -104,9 +104,14 @@ describe('paginatePrisma', () => {
         AND: [
           { title: { contains: 'x' } },
           {
-            OR: [
-              { createdAt: { lt: at } },
-              { AND: [{ createdAt: { equals: at } }, { id: { gt: 7 } }] },
+            AND: [
+              { createdAt: { lte: at } },
+              {
+                OR: [
+                  { createdAt: { lt: at } },
+                  { AND: [{ createdAt: { equals: at } }, { id: { gt: 7 } }] },
+                ],
+              },
             ],
           },
         ],
@@ -129,7 +134,7 @@ describe('paginatePrisma', () => {
       {},
       { sort, after: encodeCursor({ createdAt: new Date(0), id: 1 }, { sort }) },
     );
-    expect(next.findMany.mock.calls[0]?.[0]).toHaveProperty('where.OR');
+    expect(next.findMany.mock.calls[0]?.[0]).toHaveProperty('where.AND.1.OR');
   });
 
   it('reverses the order for "before" and restores it in the result', async () => {

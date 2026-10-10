@@ -15,6 +15,18 @@ const lt = (field: string, value: unknown): KeysetCondition => ({
   operator: 'lt',
   value,
 });
+const gte = (field: string, value: unknown): KeysetCondition => ({
+  type: 'compare',
+  field,
+  operator: 'gte',
+  value,
+});
+const lte = (field: string, value: unknown): KeysetCondition => ({
+  type: 'compare',
+  field,
+  operator: 'lte',
+  value,
+});
 const eq = (field: string, value: unknown): KeysetCondition => ({
   type: 'compare',
   field,
@@ -33,17 +45,20 @@ describe('buildKeysetCondition', () => {
       { field: 'b', direction: 'asc', nulls: 'first' },
       { field: 'id', direction: 'asc' },
     ];
-    // (a > x) OR (a = x AND b > y) OR (a = x AND b = y AND id > z)
+    // a >= x AND ((a > x) OR (a = x AND b > y) OR (a = x AND b = y AND id > z))
     expect(buildKeysetCondition(sort, { a: 'x', b: 'y', id: 'z' }, 'after')).toEqual(
-      or(
-        gt('a', 'x'),
-        and(eq('a', 'x'), gt('b', 'y')),
-        and(eq('a', 'x'), eq('b', 'y'), gt('id', 'z')),
+      and(
+        gte('a', 'x'),
+        or(
+          gt('a', 'x'),
+          and(eq('a', 'x'), gt('b', 'y')),
+          and(eq('a', 'x'), eq('b', 'y'), gt('id', 'z')),
+        ),
       ),
     );
   });
 
-  it('uses < for descending fields', () => {
+  it('uses < and <= for descending fields', () => {
     const sort: SortField<Row>[] = [
       { field: 'createdAt', direction: 'desc' },
       { field: 'id', direction: 'desc' },
@@ -51,8 +66,40 @@ describe('buildKeysetCondition', () => {
     const at = new Date('2026-01-01T00:00:00Z');
     // desc defaults to nulls first, so a non-null cursor needs no IS NULL branch.
     expect(buildKeysetCondition(sort, { createdAt: at, id: 9 }, 'after')).toEqual(
-      or(lt('createdAt', at), and(eq('createdAt', at), lt('id', 9))),
+      and(lte('createdAt', at), or(lt('createdAt', at), and(eq('createdAt', at), lt('id', 9)))),
     );
+  });
+
+  describe('leading bound', () => {
+    // The bound is redundant; it exists so databases can turn it into an index range.
+    it('is added in the reversed direction for "before"', () => {
+      const sort: SortField<Row>[] = [
+        { field: 'a', direction: 'asc', nulls: 'last' },
+        { field: 'id', direction: 'asc' },
+      ];
+      // Reversed: a desc nulls first, so no NULL a comes before a non-null cursor.
+      expect(buildKeysetCondition(sort, { a: 5, id: 2 }, 'before')).toEqual(
+        and(lte('a', 5), or(lt('a', 5), and(eq('a', 5), lt('id', 2)))),
+      );
+    });
+
+    it('is left out when NULL rows follow the cursor, since no range covers them', () => {
+      const sort: SortField<Row>[] = [
+        { field: 'a', direction: 'asc' },
+        { field: 'id', direction: 'asc' },
+      ];
+      expect(buildKeysetCondition(sort, { a: 5, id: 1 }, 'after')).toMatchObject({ type: 'or' });
+    });
+
+    it('is left out for a null cursor value', () => {
+      const sort: SortField<Row>[] = [
+        { field: 'a', direction: 'desc' },
+        { field: 'id', direction: 'desc' },
+      ];
+      expect(buildKeysetCondition(sort, { a: null, id: 1 }, 'after')).toMatchObject({
+        type: 'or',
+      });
+    });
   });
 
   it('returns a bare comparison for a single-field sort', () => {

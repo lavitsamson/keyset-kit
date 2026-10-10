@@ -159,14 +159,20 @@ describe('preparePagination', () => {
   it('builds the keyset condition from an "after" cursor', () => {
     const after = encodeCursor({ score: 2, id: 5 }, { sort });
     expect(preparePagination({ sort, after }).where).toEqual({
-      type: 'or',
+      type: 'and',
       conditions: [
-        { type: 'compare', field: 'score', operator: 'lt', value: 2 },
+        { type: 'compare', field: 'score', operator: 'lte', value: 2 },
         {
-          type: 'and',
+          type: 'or',
           conditions: [
-            { type: 'compare', field: 'score', operator: 'eq', value: 2 },
-            { type: 'compare', field: 'id', operator: 'gt', value: 5 },
+            { type: 'compare', field: 'score', operator: 'lt', value: 2 },
+            {
+              type: 'and',
+              conditions: [
+                { type: 'compare', field: 'score', operator: 'eq', value: 2 },
+                { type: 'compare', field: 'id', operator: 'gt', value: 5 },
+              ],
+            },
           ],
         },
       ],

@@ -34,8 +34,18 @@ export function evaluate(condition: KeysetCondition, row: object): boolean {
       const value = field(row, condition.field);
       if (value === null) return false;
       const result = compareValues(value, condition.value);
-      if (condition.operator === 'eq') return result === 0;
-      return condition.operator === 'gt' ? result > 0 : result < 0;
+      switch (condition.operator) {
+        case 'eq':
+          return result === 0;
+        case 'gt':
+          return result > 0;
+        case 'gte':
+          return result >= 0;
+        case 'lt':
+          return result < 0;
+        case 'lte':
+          return result <= 0;
+      }
     }
   }
 }
