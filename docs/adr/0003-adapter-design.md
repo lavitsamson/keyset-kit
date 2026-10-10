@@ -48,6 +48,20 @@ and PostgreSQL can serve it with an ordinary B-tree index in both directions.
 - **`take`, not `limit`.** With one-to-many joins, `LIMIT` counts joined rows. `take` makes
   TypeORM paginate distinct entities, which an integration test checks.
 
+### Mongoose queries
+
+- **MongoDB's null order is fixed** (null and missing values are smallest). The adapter fills in
+  `nulls: 'first'` for ascending and `'last'` for descending fields, so the core builds matching
+  conditions, and it rejects a `nulls` option MongoDB can't honour instead of returning wrong pages.
+  The conformance suite has a `fixedNullOrder: 'smallest'` mode for this.
+- **Missing fields read as null.** MongoDB sorts a missing field like `null`, and `{ field: null }`
+  matches both. Cursors therefore treat `undefined` as `null` (through an internal field reader for
+  `toPage`). Because that would hide a sort field dropped by `select()`, the adapter checks the
+  query projection and rejects one that excludes a sort field.
+- **Fields must be schema paths**, which keeps a value like `$where` from becoming an operator.
+  The caller's filter and the keyset condition are combined with `$and` on a clone of the query.
+  Decoded ObjectIds and Decimal128s arrive as strings, and Mongoose casts them through the schema.
+
 ### The conformance suite
 
 `test/integration/conformance.ts` defines the behaviour every adapter must have. Each adapter

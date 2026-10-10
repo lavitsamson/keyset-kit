@@ -47,7 +47,9 @@ Notes: verified under several local timezones (Europe/Berlin, America/New_York, 
 
 ## 5. Mongoose adapter
 
-- [ ] `paginateMongoose` + conformance on MongoDB; document Mongo null ordering
+- [x] `paginateMongoose` (lean and hydrated queries, `$and` with caller filter, schema-path validation, projection check)
+- [x] Conformance suite on MongoDB 8.3.9 (fixed null-order mode) plus ObjectId tie-breaker, missing-field, `$or`, projection and immutability tests
+- [x] MongoDB null ordering documented (README "Database notes", ADR 0003)
 
 ## 6. Express middleware
 

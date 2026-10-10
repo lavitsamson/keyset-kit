@@ -55,8 +55,20 @@ The next request passes `?after=<endCursor>`. The sort must end with a unique co
 | `keyset-kit`          | Cursor encoding/signing, keyset condition AST, `toPage` | none             | ✅      |
 | `keyset-kit/prisma`   | `paginatePrisma` (tested on PostgreSQL)                 | `@prisma/client` | ✅      |
 | `keyset-kit/typeorm`  | `paginateQueryBuilder` (tested on PostgreSQL)           | `typeorm`        | ✅      |
-| `keyset-kit/mongoose` | `paginateMongoose`                                      | `mongoose`       | planned |
+| `keyset-kit/mongoose` | `paginateMongoose` (tested on MongoDB)                  | `mongoose`       | ✅      |
 | `keyset-kit/express`  | `keysetParams` middleware, `setLinkHeader`              | `express`        | planned |
+
+## Database notes
+
+- **Null ordering.** By default nulls sort like PostgreSQL: last ascending, first descending.
+  Set `nulls: 'first' | 'last'` per field to change that (Prisma and TypeORM emit `NULLS FIRST/LAST`).
+  MongoDB can't change its null order: null and missing fields always come first ascending and
+  last descending. The Mongoose adapter follows that order and rejects a contradicting `nulls` option.
+- **Timestamp precision.** Cursors carry JavaScript `Date`s (milliseconds). Use `timestamp(3)`
+  columns in PostgreSQL (Prisma's default for `DateTime`), or rows that differ by microseconds can
+  be skipped or repeated.
+- **One type per sort field in MongoDB.** Range operators only match values of the same BSON
+  type, so a sort field shouldn't mix, say, numbers and strings.
 
 ## Development
 
