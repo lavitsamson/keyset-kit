@@ -35,6 +35,11 @@ export interface ConformanceTarget {
    * Returned rows are normalised to `Item` after the adapter has built its cursors.
    */
   paginate(options: PaginateOptions<Item>, filter?: { b: string }): Promise<Page<Item>>;
+  /**
+   * Set when the database cannot change where nulls sort. `'smallest'` (MongoDB): nulls come first
+   * ascending and last descending. The suite then only generates sorts with that null order.
+   */
+  fixedNullOrder?: 'smallest';
 }
 
 type Columns = Omit<Item, 'id'>;
@@ -96,6 +101,16 @@ const sortedIds = (rows: readonly Item[], sort: SortField<Item>[]): number[] =>
   ids([...rows].sort(compareRows(resolveSort(sort))));
 
 export function runConformanceSuite(name: string, target: () => ConformanceTarget): void {
+  /** Pins every field's null order to the database's fixed order, when it has one. */
+  const adapt = (base: Base): Base =>
+    target().fixedNullOrder === 'smallest'
+      ? {
+          ...base,
+          sort: base.sort.map((s) => ({ ...s, nulls: s.direction === 'asc' ? 'first' : 'last' })),
+        }
+      : base;
+  const adaptedBaseArb = baseArb.map(adapt);
+
   async function walkForward(base: Base, filter?: { b: string }): Promise<Item[]> {
     const seen: Item[] = [];
     let after: string | null = null;
@@ -111,7 +126,7 @@ export function runConformanceSuite(name: string, target: () => ConformanceTarge
   describe(`${name} conformance`, () => {
     it('walking forward matches the fully sorted result', async () => {
       await fc.assert(
-        fc.asyncProperty(datasetArb, baseArb, async (rows, base) => {
+        fc.asyncProperty(datasetArb, adaptedBaseArb, async (rows, base) => {
           await target().reset(rows);
           expect(ids(await walkForward(base))).toEqual(sortedIds(rows, base.sort));
         }),
@@ -121,7 +136,7 @@ export function runConformanceSuite(name: string, target: () => ConformanceTarge
 
     it('walking backward from the last row matches the fully sorted result', async () => {
       await fc.assert(
-        fc.asyncProperty(datasetArb, baseArb, async (rows, base) => {
+        fc.asyncProperty(datasetArb, adaptedBaseArb, async (rows, base) => {
           await target().reset(rows);
           const expected = sortedIds(rows, base.sort);
           const lastId = expected.at(-1);
@@ -148,7 +163,7 @@ export function runConformanceSuite(name: string, target: () => ConformanceTarge
 
     it('combines a caller filter with the keyset condition', async () => {
       await fc.assert(
-        fc.asyncProperty(datasetArb, baseArb, async (rows, base) => {
+        fc.asyncProperty(datasetArb, adaptedBaseArb, async (rows, base) => {
           await target().reset(rows);
           const matching = rows.filter((r) => r.b === 'x');
           expect(ids(await walkForward(base, { b: 'x' }))).toEqual(sortedIds(matching, base.sort));
@@ -160,7 +175,7 @@ export function runConformanceSuite(name: string, target: () => ConformanceTarge
     it('never duplicates or skips existing rows when rows are inserted between requests', async () => {
       const insertsArb = fc.array(fc.array(columnsArb, { maxLength: 3 }), { maxLength: 10 });
       await fc.assert(
-        fc.asyncProperty(datasetArb, baseArb, insertsArb, async (initial, base, inserts) => {
+        fc.asyncProperty(datasetArb, adaptedBaseArb, insertsArb, async (initial, base, inserts) => {
           await target().reset(initial);
           let nextId = initial.length + 1;
           const seen: Item[] = [];
