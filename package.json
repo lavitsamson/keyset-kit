@@ -1,0 +1,115 @@
+{
+  "name": "keyset-kit",
+  "version": "0.0.0",
+  "description": "Tiny, type-safe keyset (cursor) pagination for Prisma, TypeORM, Mongoose and Express. Zero runtime dependencies.",
+  "keywords": [
+    "pagination",
+    "keyset",
+    "cursor",
+    "seek",
+    "prisma",
+    "typeorm",
+    "mongoose",
+    "express",
+    "postgres"
+  ],
+  "author": "Lavit Samson (https://linkedin.com/in/lavit-samson)",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.7.0",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./prisma": {
+      "import": {
+        "types": "./dist/prisma/index.d.ts",
+        "default": "./dist/prisma/index.js"
+      },
+      "require": {
+        "types": "./dist/prisma/index.d.cts",
+        "default": "./dist/prisma/index.cjs"
+      }
+    },
+    "./typeorm": {
+      "import": {
+        "types": "./dist/typeorm/index.d.ts",
+        "default": "./dist/typeorm/index.js"
+      },
+      "require": {
+        "types": "./dist/typeorm/index.d.cts",
+        "default": "./dist/typeorm/index.cjs"
+      }
+    },
+    "./mongoose": {
+      "import": {
+        "types": "./dist/mongoose/index.d.ts",
+        "default": "./dist/mongoose/index.js"
+      },
+      "require": {
+        "types": "./dist/mongoose/index.d.cts",
+        "default": "./dist/mongoose/index.cjs"
+      }
+    },
+    "./express": {
+      "import": {
+        "types": "./dist/express/index.d.ts",
+        "default": "./dist/express/index.js"
+      },
+      "require": {
+        "types": "./dist/express/index.d.cts",
+        "default": "./dist/express/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check:package": "publint --strict && attw --pack . --profile node16",
+    "size": "size-limit",
+    "changeset": "changeset"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@changesets/cli": "3.0.3",
+    "@eslint/js": "10.0.1",
+    "@size-limit/preset-small-lib": "14.0.1",
+    "@types/node": "22.20.4",
+    "@vitest/coverage-v8": "5.0.2",
+    "eslint": "10.11.0",
+    "eslint-config-prettier": "10.1.8",
+    "fast-check": "4.10.2",
+    "globals": "17.12.0",
+    "prettier": "3.9.9",
+    "publint": "0.3.24",
+    "size-limit": "14.0.1",
+    "tsup": "8.5.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1",
+    "vitest": "5.0.2"
+  }
+}
