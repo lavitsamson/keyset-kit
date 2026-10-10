@@ -44,11 +44,12 @@ jobs:
         run: pnpm typecheck
 
       - name: Unit + type tests
-        run: pnpm test:coverage
+        run: pnpm test
 
       # GitHub-hosted Ubuntu runners include Docker, which Testcontainers uses for real databases.
-      - name: Integration tests (Testcontainers)
-        run: pnpm test:int
+      # Coverage thresholds apply to the combined unit + integration run.
+      - name: Integration tests (Testcontainers) + coverage
+        run: pnpm test:coverage
 
       # The examples smoke-test step is added in Milestone 7.
 
