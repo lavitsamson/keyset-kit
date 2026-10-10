@@ -34,8 +34,13 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Generate test Prisma client
+      - name: Generate Prisma clients
         run: pnpm generate
+
+      # The examples import keyset-kit through its package exports (dist/), so build before
+      # linting, the same way users consume the package.
+      - name: Build
+        run: pnpm build
 
       - name: Lint
         run: pnpm lint && pnpm format:check
@@ -50,9 +55,6 @@ jobs:
       # Coverage thresholds apply to the combined unit + integration run.
       - name: Integration tests (Testcontainers) + coverage
         run: pnpm test:coverage
-
-      - name: Build
-        run: pnpm build
 
       - name: Package checks (publint + attw)
         run: pnpm check:package

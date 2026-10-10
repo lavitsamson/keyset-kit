@@ -106,7 +106,8 @@ Supports Node ≥ 22. Development uses Node 24 LTS (pinned in `.node-version`; [
 
 ```sh
 pnpm install
-pnpm generate        # Prisma clients for the tests and the example (needed before lint/typecheck)
+pnpm generate        # Prisma clients for the tests and the example
+pnpm build           # tsup → dist/ (the examples import the built package, so build before lint)
 pnpm lint            # ESLint + (pnpm format:check for Prettier)
 pnpm typecheck
 pnpm test            # unit + type tests
@@ -114,7 +115,6 @@ pnpm test:int        # integration tests on real databases (requires Docker)
 pnpm test:coverage   # both, with coverage thresholds (requires Docker)
 pnpm test:examples   # smoke-test the example apps (requires Docker; run pnpm build first)
 pnpm docs:dev        # docs site with API reference at http://localhost:5173
-pnpm build           # tsup → dist/ (ESM + CJS + .d.ts)
 pnpm check:package   # publint + are-the-types-wrong
 pnpm size            # size-limit (core ≤ 3 kB min+gzip)
 ```
