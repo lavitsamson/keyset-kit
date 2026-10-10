@@ -1,0 +1,18 @@
+// Test-only schema for the Prisma adapter conformance suite.
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Item {
+  id    Int       @id
+  a     Int?
+  b     String?
+  c     DateTime? @db.Timestamp(3)
+  d     BigInt?
+  e     Decimal?  @db.Decimal(10, 2)
+}
