@@ -51,8 +51,6 @@ jobs:
       - name: Integration tests (Testcontainers) + coverage
         run: pnpm test:coverage
 
-      # The examples smoke-test step is added in Milestone 7.
-
       - name: Build
         run: pnpm build
 
@@ -61,3 +59,11 @@ jobs:
 
       - name: Size limit
         run: pnpm size
+
+      # Builds, seeds and runs each app in examples/ against real databases, paging over HTTP.
+      - name: Examples smoke test
+        run: pnpm test:examples
+
+      - name: Docs build (TypeDoc + VitePress)
+        if: matrix.node == 24
+        run: pnpm docs:build
