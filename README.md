@@ -34,29 +34,33 @@ npm install keyset-kit
 
 <!-- prettier-ignore -->
 ```ts
+import { keysetParams, setLinkHeader } from 'keyset-kit/express';
 import { paginatePrisma } from 'keyset-kit/prisma';
 
-app.get('/posts', async (req, res) => {
-  const page = await paginatePrisma(prisma.post, { where: { published: true } }, {
-    sort: [{ field: 'createdAt', direction: 'desc' }, { field: 'id', direction: 'asc' }],
-    after: typeof req.query.after === 'string' ? req.query.after : null,
-    secret: process.env.CURSOR_SECRET, // optional: sign cursors
-  });
+app.get('/posts', keysetParams<Post>({
+  allowedSort: ['createdAt', 'title'],
+  defaultSort: [{ field: 'createdAt', direction: 'desc' }, { field: 'id', direction: 'asc' }],
+  secret: process.env.CURSOR_SECRET, // optional: sign cursors
+}), async (req, res) => {
+  const page = await paginatePrisma(prisma.post, { where: { published: true } }, req.keyset);
+  setLinkHeader(res, req, page.pageInfo); // Link: <...?after=...>; rel="next"
   res.json(page); // { data, pageInfo: { hasNextPage, endCursor, ... } }
 });
 ```
 
-The next request passes `?after=<endCursor>`. The sort must end with a unique column (here `id`).
+Clients page with `?after=<endCursor>` (or follow the `Link` header) and may pass
+`?limit=` and `?sort=-createdAt,title`. Invalid input gets a 400 Problem Details response. The
+last `defaultSort` field (`id`) is the unique tie-breaker, appended to every sort.
 
 ## Entry points
 
-| Import                | Purpose                                                 | Peer dependency  | Status  |
-| --------------------- | ------------------------------------------------------- | ---------------- | ------- |
-| `keyset-kit`          | Cursor encoding/signing, keyset condition AST, `toPage` | none             | ✅      |
-| `keyset-kit/prisma`   | `paginatePrisma` (tested on PostgreSQL)                 | `@prisma/client` | ✅      |
-| `keyset-kit/typeorm`  | `paginateQueryBuilder` (tested on PostgreSQL)           | `typeorm`        | ✅      |
-| `keyset-kit/mongoose` | `paginateMongoose` (tested on MongoDB)                  | `mongoose`       | ✅      |
-| `keyset-kit/express`  | `keysetParams` middleware, `setLinkHeader`              | `express`        | planned |
+| Import                | Purpose                                                 | Peer dependency  | Status |
+| --------------------- | ------------------------------------------------------- | ---------------- | ------ |
+| `keyset-kit`          | Cursor encoding/signing, keyset condition AST, `toPage` | none             | ✅     |
+| `keyset-kit/prisma`   | `paginatePrisma` (tested on PostgreSQL)                 | `@prisma/client` | ✅     |
+| `keyset-kit/typeorm`  | `paginateQueryBuilder` (tested on PostgreSQL)           | `typeorm`        | ✅     |
+| `keyset-kit/mongoose` | `paginateMongoose` (tested on MongoDB)                  | `mongoose`       | ✅     |
+| `keyset-kit/express`  | `keysetParams` middleware, `setLinkHeader`              | `express`        | ✅     |
 
 ## Database notes
 
@@ -91,6 +95,7 @@ pnpm size            # size-limit (core ≤ 3 kB min+gzip)
 
 - [ADR 0001: Build and language toolchain](docs/adr/0001-toolchain.md): why TypeScript 6 + tsup, Node ≥ 22, and pnpm's supply-chain guards.
 - [ADR 0002: Cursor format, signing and ordering](docs/adr/0002-cursor-format-and-ordering.md): what's in a cursor, how signing and sort binding work, and how nulls and ties are ordered.
+- [ADR 0004: Express middleware](docs/adr/0004-express-middleware.md): the `ParsedSort` brand, how the tie-breaker is managed, cursor validation at the edge, Problem Details and relative `Link` URLs.
 - [ADR 0003: Adapter design and the conformance suite](docs/adr/0003-adapter-design.md): one shared pipeline, structural ORM types, and a conformance suite every adapter must pass on a real database.
 
 ## Author

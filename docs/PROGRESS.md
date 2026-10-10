@@ -53,8 +53,13 @@ Notes: verified under several local timezones (Europe/Berlin, America/New_York, 
 
 ## 6. Express middleware
 
-- [ ] `keysetParams` (parsing, validation, 400 Problem Details)
-- [ ] `setLinkHeader` (RFC 8288)
+- [x] `keysetParams` (parsing, validation, tie-breaker handling, cursor checks, 400 Problem Details)
+- [x] `setLinkHeader` (RFC 8288, relative URLs, keeps other params, appends to existing header)
+- [x] `ParsedSort` brand so `req.keyset` spreads into any adapter without casts
+- [x] ADR 0004
+
+Notes: config gained an optional `secret` beyond the spec (see ADR 0004). Tests use a real Express
+server with Node's `fetch` (no Supertest dependency).
 
 ## 7. Examples + docs site
 
