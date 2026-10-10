@@ -1,0 +1,27 @@
+{
+  "name": "@examples/nestjs-typeorm",
+  "private": true,
+  "type": "module",
+  "description": "keyset-kit example: NestJS 12 + TypeORM 1 + PostgreSQL",
+  "scripts": {
+    "start": "docker compose up -d --wait && pnpm serve",
+    "serve": "pnpm build && node dist/seed.js && node dist/main.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "catalog:",
+    "@nestjs/core": "catalog:",
+    "@nestjs/platform-express": "catalog:",
+    "keyset-kit": "workspace:*",
+    "pg": "catalog:",
+    "reflect-metadata": "catalog:",
+    "rxjs": "catalog:",
+    "typeorm": "catalog:"
+  },
+  "devDependencies": {
+    "@types/express": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

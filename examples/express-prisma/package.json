@@ -1,0 +1,26 @@
+{
+  "name": "@examples/express-prisma",
+  "private": true,
+  "type": "module",
+  "description": "keyset-kit example: Express 5 + Prisma 7 + PostgreSQL",
+  "scripts": {
+    "start": "docker compose up -d --wait && pnpm serve",
+    "serve": "pnpm build && node dist/seed.js && node dist/main.js",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "catalog:",
+    "@prisma/client": "catalog:",
+    "express": "catalog:",
+    "keyset-kit": "workspace:*",
+    "pg": "catalog:"
+  },
+  "devDependencies": {
+    "@types/express": "catalog:",
+    "@types/node": "catalog:",
+    "@types/pg": "catalog:",
+    "prisma": "catalog:",
+    "typescript": "catalog:"
+  }
+}

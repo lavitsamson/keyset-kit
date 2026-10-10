@@ -1,0 +1,22 @@
+{
+  "name": "@examples/express-mongoose",
+  "private": true,
+  "type": "module",
+  "description": "keyset-kit example: Express 5 + Mongoose 9 + MongoDB",
+  "scripts": {
+    "start": "docker compose up -d --wait && pnpm serve",
+    "serve": "pnpm build && node dist/seed.js && node dist/main.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "express": "catalog:",
+    "keyset-kit": "workspace:*",
+    "mongoose": "catalog:"
+  },
+  "devDependencies": {
+    "@types/express": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -6,6 +6,25 @@ packages:
 # Value is in minutes (14 * 24 * 60).
 minimumReleaseAge: 20160
 
+# Versions shared by the library's dev setup and the examples, defined once.
+catalog:
+  '@nestjs/common': 12.1.0
+  '@nestjs/core': 12.1.0
+  '@nestjs/platform-express': 12.1.0
+  '@prisma/adapter-pg': 7.10.0
+  '@prisma/client': 7.10.0
+  '@types/express': 5.0.6
+  '@types/node': 22.20.4
+  '@types/pg': 8.23.1
+  'express': 5.2.1
+  'mongoose': 9.10.2
+  'pg': 8.23.0
+  'prisma': 7.10.0
+  'reflect-metadata': 0.2.2
+  'rxjs': 7.8.2
+  'typeorm': 1.1.1
+  'typescript': 6.0.3
+
 # Only these dependencies may run install scripts.
 allowBuilds:
   esbuild: true

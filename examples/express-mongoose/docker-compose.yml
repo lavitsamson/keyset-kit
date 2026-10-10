@@ -1,0 +1,10 @@
+services:
+  mongo:
+    image: mongo:8.3.9
+    ports:
+      - '27018:27017'
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.runCommand({ ping: 1 }).ok']
+      interval: 2s
+      timeout: 5s
+      retries: 15
