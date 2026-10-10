@@ -1,5 +1,5 @@
 import { preparePagination, toPage } from '../core/page.js';
-import type { ResolvedSortField } from '../core/sort.js';
+import { hasDefaultNulls, type ResolvedSortField } from '../core/sort.js';
 import type { KeysetCondition, Page, PaginateOptions } from '../core/types.js';
 
 /**
@@ -92,8 +92,7 @@ export function toPrismaWhere(condition: KeysetCondition): PrismaWhere {
  * can serve it in both directions. Otherwise `{ sort, nulls }` makes the order explicit.
  */
 export function toPrismaOrderBy(sort: readonly ResolvedSortField[]): PrismaOrderBy[] {
-  return sort.map((s) => {
-    const isDefault = s.nulls === (s.direction === 'asc' ? 'last' : 'first');
-    return { [s.field]: isDefault ? s.direction : { sort: s.direction, nulls: s.nulls } };
-  });
+  return sort.map((s) => ({
+    [s.field]: hasDefaultNulls(s) ? s.direction : { sort: s.direction, nulls: s.nulls },
+  }));
 }

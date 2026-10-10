@@ -50,6 +50,14 @@ export function resolveSort(sort: readonly AnySortField[]): ResolvedSortField[] 
   });
 }
 
+/**
+ * Whether the null placement is PostgreSQL's default for the direction (last asc, first desc).
+ * Adapters then omit an explicit NULLS clause, which keeps queries portable and index-friendly.
+ */
+export function hasDefaultNulls(s: ResolvedSortField): boolean {
+  return s.nulls === (s.direction === 'asc' ? 'last' : 'first');
+}
+
 /** The exact reverse ordering, used to fetch the page before a cursor. */
 export function reverseSort(sort: readonly ResolvedSortField[]): ResolvedSortField[] {
   return sort.map((s) => ({
