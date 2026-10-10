@@ -36,6 +36,9 @@ const page = await paginatePrisma(
   `nulls` only on optional fields, so don't set it on required ones.
 - **Index the sort**: `@@index([createdAt(sort: Desc), id])` lets PostgreSQL serve each page with
   an index range scan.
+- **Mark required sort fields** with `nullable: false`. The adapter can't see your schema, so
+  otherwise it assumes nulls are possible, and ascending sorts and backwards pages then can't use
+  the index as a range. See [Sorting & nulls](./sorting-and-nulls#indexes).
 - **`DateTime` is safe.** Prisma maps it to `timestamp(3)`, the same millisecond precision as the
   JavaScript `Date` in the cursor.
 - **Decimals** in cursors come back as strings, which Prisma accepts in filters.

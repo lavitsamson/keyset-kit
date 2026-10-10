@@ -35,8 +35,10 @@ app.get(
 | `sort`    | `?sort=-createdAt,title` | Allowed fields, comma-separated; `-` = descending.     |
 
 The last field of `defaultSort` is the unique tie-breaker. It's appended to every client sort, and
-fields after it are dropped if a client sorts by it explicitly. A `nulls` option in `defaultSort`
-also applies when a client picks the same field.
+fields after it are dropped if a client sorts by it explicitly. A `nulls` or `nullable` option in
+`defaultSort` also applies when a client picks the same field. Mark required columns with
+`nullable: false` there (see [Sorting & nulls](./sorting-and-nulls#indexes)); fields that are only
+in `allowedSort` are treated as nullable.
 
 ## `req.keyset`
 

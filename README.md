@@ -45,7 +45,7 @@ import { paginatePrisma } from 'keyset-kit/prisma';
 
 app.get('/posts', keysetParams<Post>({
   allowedSort: ['createdAt', 'title'],
-  defaultSort: [{ field: 'createdAt', direction: 'desc' }, { field: 'id', direction: 'asc' }],
+  defaultSort: [{ field: 'createdAt', direction: 'desc', nullable: false }, { field: 'id', direction: 'asc' }],
   secret: process.env.CURSOR_SECRET, // optional: sign cursors
 }), async (req, res) => {
   const page = await paginatePrisma(prisma.post, { where: { published: true } }, req.keyset);
@@ -57,6 +57,8 @@ app.get('/posts', keysetParams<Post>({
 Clients page with `?after=<endCursor>` (or follow the `Link` header) and may pass
 `?limit=` and `?sort=-createdAt,title`. Invalid input gets a 400 Problem Details response. The
 last `defaultSort` field (`id`) is the unique tie-breaker, appended to every sort.
+`nullable: false` marks a `NOT NULL` column, so every page stays an index range scan in both
+directions ([why](https://lavitsamson.github.io/keyset-kit/guide/sorting-and-nulls#indexes)).
 
 ## Entry points
 

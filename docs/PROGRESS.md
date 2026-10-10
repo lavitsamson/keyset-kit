@@ -79,10 +79,11 @@ Repository: https://github.com/lavitsamson/keyset-kit (docs: https://lavitsamson
 
 Notes: the first run showed keyset no faster than OFFSET with a matching index (an OR can't be an
 index range). The condition now carries a leading bound on the first sort field; page 10,000 went
-from 124 ms to 2.3 ms (ADR 0002). Still open: ascending sorts with default nulls, and backwards
-paging on descending sorts, need an `IS NULL` branch and aren't range scans (documented in
-"Sorting & nulls"). `pnpm bench` writes `bench/RESULTS.md` and the README section; numbers are
-never edited by hand.
+from 124 ms to 2.3 ms (ADR 0002). Ascending sorts and backwards pages needed an `IS NULL` branch
+that defeats the index, so `SortField` gained `nullable: false` (TypeORM detects `NOT NULL`
+columns automatically, Express carries it from `defaultSort`). Both cases now read 25 buffers at
+depth ~200k on the benchmark table. `pnpm bench` writes `bench/RESULTS.md` and the README section;
+numbers are never edited by hand. Core is 2.99 kB of its 3 kB budget.
 
 ## 9. Release 1.0.0
 

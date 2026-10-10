@@ -12,7 +12,8 @@ export function createApp(prisma: PrismaClient, cursorSecret: string): express.E
     keysetParams<Post>({
       allowedSort: ['createdAt', 'title', 'score'],
       defaultSort: [
-        { field: 'createdAt', direction: 'desc' },
+        // Required column: no IS NULL branches, so every page (and ?sort=createdAt) uses the index.
+        { field: 'createdAt', direction: 'desc', nullable: false },
         { field: 'id', direction: 'asc' },
       ],
       maxLimit: 100,

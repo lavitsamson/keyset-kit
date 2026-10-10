@@ -37,6 +37,10 @@ const page = await paginateQueryBuilder(qb, 'post', {
 - **Field names are validated.** Each sort field must be a column of the entity, so a field name
   from user input never reaches the SQL. Values are always passed as parameters.
 - Your `ORDER BY` is replaced by the sort you pass.
+- **`NOT NULL` columns are detected.** Sort fields on non-nullable columns of the main entity are
+  treated as `nullable: false`, so pages stay index range scans in both directions and for
+  ascending sorts. Fields of joined aliases are left nullable, since a `LEFT JOIN` can produce
+  nulls. A `nullable` you set yourself wins.
 
 ## Things to know
 

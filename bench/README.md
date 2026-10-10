@@ -38,8 +38,9 @@ and the query plans without writing any files.
   parameters each strategy sent, captured from TypeORM's logger.
 
 Only forward paging on a descending sort is measured, the common "newest first" feed. Ascending
-sorts with PostgreSQL's default null order, and backwards paging, currently need an `IS NULL`
-branch that keeps the query from being an index range (see "Sorting & nulls" in the docs).
+sorts and backwards paging produce the same kind of plan when the first sort column is known to
+be non-null: TypeORM detects `NOT NULL` columns, and other adapters take `nullable: false` (see
+"Sorting & nulls" in the docs). Without that, they need an `IS NULL` branch and aren't index ranges.
 
 PostgreSQL runs with default settings except `shared_buffers=512MB`, so the table stays in memory
 and the results reflect query plans rather than disk speed. Absolute numbers depend on the machine;

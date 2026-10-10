@@ -13,7 +13,8 @@ export function createApp(cursorSecret: string): express.Express {
       allowedSort: ['createdAt', 'title', 'score'],
       // MongoDB's natural tie-breaker is the unique _id.
       defaultSort: [
-        { field: 'createdAt', direction: 'desc' },
+        // Required column: no IS NULL branches, so every page (and ?sort=createdAt) uses the index.
+        { field: 'createdAt', direction: 'desc', nullable: false },
         { field: '_id', direction: 'asc' },
       ],
       maxLimit: 100,

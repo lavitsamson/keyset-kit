@@ -94,14 +94,41 @@ The bound is only added when it's exact: the cursor's first value is non-null an
 before it. When nulls sort after the cursor (an ascending field with PostgreSQL's default
 `nulls: 'last'`, or paging backwards through a descending one), the rows after it include
 `a IS NULL`. No index range covers `a >= x OR a IS NULL`, and PostgreSQL 18 doesn't simplify that
-`IS NULL` away inside an `OR`, even on a `NOT NULL` column. Those queries stay correct but still
-filter through the index, so their cost grows with depth. Fixing that needs to know which sort
-columns can't be null, which a sort spec doesn't carry today.
+`IS NULL` away inside an `OR`, even on a `NOT NULL` column. Such queries are correct but filter
+through the index, so their cost grows with depth: 13–23 ms for a cursor about 214,000 rows into
+the benchmark table, against 0.1 ms with the bound.
+
+### Declaring non-null fields (`nullable: false`)
+
+To remove that `IS NULL` branch, the core has to know that a column can't be null, and a sort spec
+didn't say so. `SortField` gained an optional `nullable` (default `true`, which is always correct).
+Fields that are non-nullable, meaning the tie-breaker or any field declared `nullable: false`, get
+no `IS NULL` branches and always get the leading bound, in both directions. They also emit a plain
+`ORDER BY` direction, since null placement is irrelevant for them.
+
+- **TypeORM detects it.** The adapter reads `isNullable` from the entity metadata, but only for the
+  query's main alias, because a `LEFT JOIN` can return nulls for a joined entity's `NOT NULL`
+  column. A `nullable` the caller sets wins.
+- **Prisma and Mongoose can't.** A Prisma delegate exposes no schema through public API, and a
+  MongoDB field can be missing even when the Mongoose schema requires it. Callers declare it.
+- **Express** copies `nullable` from `defaultSort` onto client-chosen fields, as it does for `nulls`.
+  Fields that appear only in `allowedSort` stay nullable. Keeping the spec's `allowedSort: string[]`
+  was worth that gap.
+- **Wrong declarations fail loudly where they can.** A null in a non-nullable field, whether in a
+  cursor or in a fetched row, throws instead of silently skipping rows. Rows that were never
+  fetched can't be checked, which the docs state.
+- **Not part of the sort hash.** `nullable` doesn't change the order, so cursors stay valid
+  whichever way it's declared.
+
+Rejected: assuming non-null by default. It would make the common case fast without any
+declaration, but a nullable column would then silently lose its null rows. Defaults must be
+correct and fast paths opt-in.
 
 ### Tie-breaker validation
 
 Whether a column is unique can't be seen from a sort spec. `toPage` checks what it can: it throws
-if any fetched row has a null or missing last field, or if two rows share it. This catches the
+if any fetched row has a null or missing last field (or a null in a `nullable: false` field), or if
+two rows share the last field. This catches the
 common mistake (sorting by `createdAt` alone) the first time duplicates appear in a page.
 
 ### `pageInfo` without extra queries
@@ -118,5 +145,6 @@ approximation the Relay connection spec allows. That avoids a second query.
   random sort specs, walked forwards and backwards, with inserts between requests.
 - Query plans are checked by the benchmarks (`bench/`), which run each strategy's exact SQL under
   `EXPLAIN ANALYZE` on 1,000,000 rows.
-- The core is 2.96 kB min+gzip against a 3 kB budget. Most of that is actionable error text,
+- The core is 2.99 kB min+gzip against a 3 kB budget. Further core features will need to
+  give something up, or the budget will need revisiting. Most of that is actionable error text,
   which we keep on purpose. Adapters are separate entry points and don't count toward it.
