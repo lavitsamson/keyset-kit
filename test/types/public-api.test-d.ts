@@ -1,11 +1,26 @@
 import { assertType, describe, expectTypeOf, it } from 'vitest';
-import type { InvalidCursorCode, PaginateOptions, SortField } from '../../src/index.js';
+import {
+  buildKeysetCondition,
+  decodeCursor,
+  encodeCursor,
+  toPage,
+  type InvalidCursorCode,
+  type KeysetCondition,
+  type Page,
+  type PaginateOptions,
+  type SortField,
+} from '../../src/index.js';
 
 interface Post {
   id: number;
   title: string;
   createdAt: Date;
 }
+
+const sort: SortField<Post>[] = [
+  { field: 'createdAt', direction: 'desc' },
+  { field: 'id', direction: 'asc' },
+];
 
 describe('public types', () => {
   it('infers sortable field names from the model type', () => {
@@ -18,16 +33,39 @@ describe('public types', () => {
   });
 
   it('does not accept explicit undefined for optional options (exactOptionalPropertyTypes)', () => {
+    const options = { sort, limit: undefined };
     // @ts-expect-error - limit must be omitted, not undefined
-    assertType<PaginateOptions<Post>>({
-      sort: [{ field: 'id', direction: 'asc' }],
-      limit: undefined,
-    });
+    assertType<PaginateOptions<Post>>(options);
+  });
+
+  it('accepts a readonly (as const) sort spec', () => {
+    const constSort = [{ field: 'id', direction: 'asc' }] as const;
+    assertType<PaginateOptions<Post>>({ sort: constSort });
   });
 
   it('exposes the three error codes', () => {
     expectTypeOf<InvalidCursorCode>().toEqualTypeOf<
       'INVALID_CURSOR' | 'TAMPERED_CURSOR' | 'SORT_MISMATCH'
     >();
+  });
+
+  it('toPage preserves the row type', () => {
+    const rows: Post[] = [];
+    expectTypeOf(toPage(rows, { sort })).toEqualTypeOf<Page<Post>>();
+    // @ts-expect-error - sort fields are checked against the row type
+    toPage(rows, { sort: [{ field: 'missing', direction: 'asc' }] });
+  });
+
+  it('buildKeysetCondition checks fields against the model and returns the AST type', () => {
+    expectTypeOf(buildKeysetCondition<Post>(sort, {}, 'after')).toEqualTypeOf<KeysetCondition>();
+    // @ts-expect-error - 'missing' is not a field of Post
+    buildKeysetCondition<Post>([{ field: 'missing', direction: 'asc' }], {}, 'after');
+    // @ts-expect-error - direction must be 'after' or 'before'
+    buildKeysetCondition<Post>(sort, {}, 'forward');
+  });
+
+  it('cursor functions accept a model-typed sort spec', () => {
+    expectTypeOf(encodeCursor({ id: 1 }, { sort, secret: 's' })).toEqualTypeOf<string>();
+    expectTypeOf(decodeCursor('c', { sort })).toEqualTypeOf<Record<string, unknown>>();
   });
 });
