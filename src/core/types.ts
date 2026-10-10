@@ -13,7 +13,10 @@ export interface SortField<T> {
   /** Model field to sort by. Inferred from the model type. */
   field: keyof T & string;
   direction: SortDirection;
-  /** Where `null` values sort. Defaults to the database's native behaviour. */
+  /**
+   * Where `null` values sort. Defaults to PostgreSQL's behaviour: nulls count as larger than
+   * any value, so they come `last` ascending and `first` descending.
+   */
   nulls?: 'first' | 'last';
 }
 
@@ -30,8 +33,8 @@ export interface SortField<T> {
  * ```
  */
 export interface PaginateOptions<T> {
-  /** Sort specification. Must end with a unique field (e.g. `id`) so ordering is total. */
-  sort: SortField<T>[];
+  /** Sort specification. Must end with a unique, non-null field (e.g. `id`) so ordering is total. */
+  sort: readonly SortField<T>[];
   /** Page size. Defaults to 20. */
   limit?: number;
   /** Upper bound for `limit`; larger requests are clamped. Defaults to 100. */
@@ -57,3 +60,41 @@ export interface Page<T> {
   data: T[];
   pageInfo: PageInfo;
 }
+
+/**
+ * Structural shape shared by every `SortField<T>`. Used where the model type is irrelevant: since
+ * `SortField<T>` is contravariant in `T`, `SortField<Post>` is not assignable to `SortField<object>`.
+ */
+export interface AnySortField {
+  field: string;
+  direction: SortDirection;
+  nulls?: 'first' | 'last';
+}
+
+/** Options for `encodeCursor` and `decodeCursor`. */
+export interface CursorOptions {
+  /** Sign (encode) or verify (decode) the cursor with HMAC-SHA256. */
+  secret?: string;
+  /**
+   * Bind the cursor to this sort specification. On encode, only the sort fields are stored and a
+   * hash of the spec is embedded; on decode, a cursor made under a different spec is rejected
+   * with `SORT_MISMATCH`.
+   */
+  sort?: readonly AnySortField[];
+}
+
+/** Which side of the cursor a page lies on. */
+export type PaginationDirection = 'after' | 'before';
+
+/**
+ * ORM-agnostic description of "rows strictly past the cursor". Adapters translate it into
+ * Prisma `where`, TypeORM brackets or a MongoDB filter.
+ *
+ * - `compare`: `field <operator> value`; never matches a row whose field is null.
+ * - `null`: `field IS NULL` (`isNull: true`) or `field IS NOT NULL` (`isNull: false`).
+ */
+export type KeysetCondition =
+  | { type: 'and'; conditions: KeysetCondition[] }
+  | { type: 'or'; conditions: KeysetCondition[] }
+  | { type: 'compare'; field: string; operator: 'gt' | 'lt' | 'eq'; value: unknown }
+  | { type: 'null'; field: string; isNull: boolean };
