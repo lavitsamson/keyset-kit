@@ -2,7 +2,13 @@
 
 Tiny, type-safe keyset (cursor) pagination for Prisma, TypeORM, Mongoose and Express. Zero runtime dependencies.
 
-<!-- Badges (CI, npm version, bundle size) are added once the GitHub repository and npm package are live. -->
+[![CI](https://github.com/lavitsamson/keyset-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/lavitsamson/keyset-kit/actions/workflows/ci.yml)
+[![Docs](https://github.com/lavitsamson/keyset-kit/actions/workflows/docs.yml/badge.svg)](https://lavitsamson.github.io/keyset-kit/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+<!-- npm version and bundle-size badges are added with the first npm release. -->
+
+📖 **Documentation:** <https://lavitsamson.github.io/keyset-kit/>
 
 > **Status:** pre-release, under active development. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
@@ -64,8 +70,8 @@ last `defaultSort` field (`id`) is the unique tie-breaker, appended to every sor
 
 ## Documentation
 
-The guide lives in [`docs/`](docs/guide/getting-started.md) and is published as a VitePress site
-(with a TypeDoc API reference) to GitHub Pages: getting started, why keyset pagination, each adapter,
+The guide lives in [`docs/`](docs/guide/getting-started.md) and is published at
+<https://lavitsamson.github.io/keyset-kit/> (VitePress, with a TypeDoc API reference): getting started, why keyset pagination, each adapter,
 the Express middleware, signed cursors, sorting & nulls, error handling, migrating from OFFSET, and
 an FAQ. Run it locally with `pnpm docs:dev`.
 

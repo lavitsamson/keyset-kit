@@ -14,6 +14,11 @@ export default defineConfig({
   srcExclude: ['PROGRESS.md'],
   themeConfig: {
     search: { provider: 'local' },
+    socialLinks: [{ icon: 'github', link: 'https://github.com/lavitsamson/keyset-kit' }],
+    editLink: {
+      pattern: 'https://github.com/lavitsamson/keyset-kit/edit/main/docs/:path',
+      text: 'Edit this page on GitHub',
+    },
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Design decisions', link: '/adr/0001-toolchain' },

@@ -14,6 +14,5 @@
   "readme": "none",
   "includeVersion": true,
   "validation": { "notExported": true, "invalidLink": true, "notDocumented": true },
-  "disableSources": true,
   "treatWarningsAsErrors": true
 }

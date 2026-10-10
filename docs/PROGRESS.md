@@ -70,7 +70,7 @@ server with Node's `fetch` (no Supertest dependency).
 
 Notes: the Mongoose example exposed a real bug. Cursor sort hashes included database-specific null
 defaults, so middleware and Mongoose disagreed. Hashes now cover the declared sort only (ADR 0002).
-TypeDoc source links are disabled until the GitHub repository exists.
+Repository: https://github.com/lavitsamson/keyset-kit (docs: https://lavitsamson.github.io/keyset-kit/).
 
 ## 8. Benchmarks
 
