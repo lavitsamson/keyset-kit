@@ -1,8 +1,9 @@
 [
   {
-    "name": "core (ESM)",
+    "name": "core (ESM, everything exported)",
     "path": "dist/index.js",
     "limit": "3 kB",
-    "gzip": true
+    "gzip": true,
+    "ignore": ["node:crypto"]
   }
 ]
