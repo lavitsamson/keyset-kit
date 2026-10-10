@@ -9,3 +9,10 @@ minimumReleaseAge: 20160
 # Only these dependencies may run install scripts.
 allowBuilds:
   esbuild: true
+  # Not needed: optional native speed-ups (ssh2, cpu-features), a version check (protobufjs),
+  # and engine downloads that `prisma generate` does not use in Prisma 7.
+  '@prisma/engines': false
+  cpu-features: false
+  prisma: false
+  protobufjs: false
+  ssh2: false
