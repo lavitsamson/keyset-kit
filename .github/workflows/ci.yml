@@ -34,6 +34,9 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Generate test Prisma client
+        run: pnpm generate
+
       - name: Lint
         run: pnpm lint && pnpm format:check
 
@@ -43,7 +46,11 @@ jobs:
       - name: Unit + type tests
         run: pnpm test:coverage
 
-      # Integration (Testcontainers) and examples smoke-test steps are added in Milestones 3 and 7.
+      # GitHub-hosted Ubuntu runners include Docker, which Testcontainers uses for real databases.
+      - name: Integration tests (Testcontainers)
+        run: pnpm test:int
+
+      # The examples smoke-test step is added in Milestone 7.
 
       - name: Build
         run: pnpm build
