@@ -3,14 +3,12 @@
 Tiny, type-safe keyset (cursor) pagination for Prisma, TypeORM, Mongoose and Express. Zero runtime dependencies.
 
 [![CI](https://github.com/lavitsamson/keyset-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/lavitsamson/keyset-kit/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/keyset-kit.svg)](https://www.npmjs.com/package/keyset-kit)
+[![Size](https://img.shields.io/bundlejs/size/keyset-kit)](https://bundlejs.com/?q=keyset-kit)
 [![Docs](https://github.com/lavitsamson/keyset-kit/actions/workflows/docs.yml/badge.svg)](https://lavitsamson.github.io/keyset-kit/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-<!-- npm version and bundle-size badges are added with the first npm release. -->
-
 **Documentation:** <https://lavitsamson.github.io/keyset-kit/>
-
-> **Status:** pre-release, under active development. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Why
 
@@ -151,12 +149,21 @@ pnpm size            # size-limit (core ≤ 3 kB min+gzip)
 pnpm bench           # OFFSET vs keyset on 1M PostgreSQL rows; rewrites bench/RESULTS.md (Docker)
 ```
 
+## Releasing
+
+Releases are automated with [Changesets](https://github.com/changesets/changesets): merging the
+"version packages" PR publishes to npm from GitHub Actions with
+[provenance](https://docs.npmjs.com/generating-provenance-statements), so every version links back
+to the commit and workflow run that built it. See [docs/RELEASING.md](docs/RELEASING.md) and
+[CHANGELOG.md](CHANGELOG.md).
+
 ## Design decisions
 
 - [ADR 0001: Build and language toolchain](docs/adr/0001-toolchain.md): why TypeScript 6 + tsup, Node ≥ 22, and pnpm's supply-chain guards.
 - [ADR 0002: Cursor format, signing and ordering](docs/adr/0002-cursor-format-and-ordering.md): what's in a cursor, how signing and sort binding work, and how nulls and ties are ordered.
-- [ADR 0004: Express middleware](docs/adr/0004-express-middleware.md): the `ParsedSort` brand, how the tie-breaker is managed, cursor validation at the edge, Problem Details and relative `Link` URLs.
 - [ADR 0003: Adapter design and the conformance suite](docs/adr/0003-adapter-design.md): one shared pipeline, structural ORM types, and a conformance suite every adapter must pass on a real database.
+- [ADR 0004: Express middleware](docs/adr/0004-express-middleware.md): the `ParsedSort` brand, how the tie-breaker is managed, cursor validation at the edge, Problem Details and relative `Link` URLs.
+- [ADR 0005: Release pipeline](docs/adr/0005-release-pipeline.md): changesets, publishing only after green CI, npm trusted publishing with provenance, and least-privilege release jobs.
 
 ## Author
 

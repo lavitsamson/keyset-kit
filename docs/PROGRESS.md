@@ -87,4 +87,14 @@ numbers are never edited by hand. Core is 2.99 kB of its 3 kB budget.
 
 ## 9. Release 1.0.0
 
-- [ ] Release workflow (Changesets + npm provenance), badges, GitHub release notes
+- [x] Release workflow (`.github/workflows/release.yml`): runs after green CI on `main`, Changesets Version Packages PR, npm trusted publishing with provenance, GitHub release from the changelog
+- [x] Least-privilege release jobs (select mode, version, pack, publish), SHA-pinned, no dependency cache
+- [x] One `major` changeset with the 1.0.0 release notes (replaces the pre-release changesets)
+- [x] npm, size, CI, docs and license badges; `CHANGELOG.md` ships in the package
+- [x] ADR 0005 (release pipeline), `docs/RELEASING.md` (one-time setup and verification)
+- [ ] First publish: one-time GitHub/npm setup in `docs/RELEASING.md`, then merge the Version Packages PR
+
+Notes: npm can't publish a package's first version through trusted publishing, so 1.0.0 uses a
+short-lived token in the `npm` environment (still with provenance); trusted publishing takes over
+afterwards. `changeset version` and `changeset pack` were dry-run locally: 0.0.0 → 1.0.0, the
+generated changelog passes Prettier, and the tarball holds `dist/`, README, LICENSE and the changelog.

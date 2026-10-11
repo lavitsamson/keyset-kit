@@ -11,7 +11,7 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   // Working notes, not documentation.
-  srcExclude: ['PROGRESS.md'],
+  srcExclude: ['PROGRESS.md', 'RELEASING.md'],
   themeConfig: {
     search: { provider: 'local' },
     socialLinks: [{ icon: 'github', link: 'https://github.com/lavitsamson/keyset-kit' }],
@@ -59,6 +59,7 @@ export default defineConfig({
           { text: '0002 Cursor format & ordering', link: '/adr/0002-cursor-format-and-ordering' },
           { text: '0003 Adapter design', link: '/adr/0003-adapter-design' },
           { text: '0004 Express middleware', link: '/adr/0004-express-middleware' },
+          { text: '0005 Release pipeline', link: '/adr/0005-release-pipeline' },
         ],
       },
     ],
