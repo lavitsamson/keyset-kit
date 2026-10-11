@@ -35,3 +35,7 @@ allowBuilds:
   prisma: false
   protobufjs: false
   ssh2: false
+
+# Every publish carries an npm provenance attestation. Provenance can only be generated in CI,
+# so this also stops accidental publishes from a laptop.
+provenance: true

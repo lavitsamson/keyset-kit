@@ -30,7 +30,8 @@
   },
   "packageManager": "pnpm@12.7.0",
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
