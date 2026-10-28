@@ -5,8 +5,11 @@ import type { Page, PaginateOptions, SortField } from '../../src/index.js';
 import { paginateMongoose } from '../../src/mongoose/index.js';
 import { runConformanceSuite, type ConformanceTarget, type Item } from './conformance.js';
 
-/** Pinned so integration results are reproducible. */
-const MONGO_IMAGE = 'mongo:8.3.9';
+/**
+ * Pinned so integration results are reproducible. MongoDB 8.x exits at startup on CI's Ubuntu
+ * Azure kernel until 8.3.14 (SERVER-131779, see #2).
+ */
+const MONGO_IMAGE = 'mongo:7.0.43';
 
 interface ItemDoc {
   id: number;

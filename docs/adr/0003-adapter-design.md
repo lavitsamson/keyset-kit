@@ -86,3 +86,8 @@ class name `Decimal2`, so detecting decimals by constructor name failed. Detecti
   equality on the cursor value can fail, which skips or repeats rows. Prisma's `DateTime` maps to
   `timestamp(3)` by default, which is safe. Other setups should use `timestamp(3)` or add a unique
   tie-breaker that doesn't depend on the timestamp. This goes in the "Sorting & nulls" docs page.
+- **MongoDB version.** The Mongoose suite runs on MongoDB 7.0. MongoDB 8.x up to 8.3.13 exits at
+  startup on the Ubuntu Azure kernel GitHub's runners use (`7.0.0-*-azure`), because its kernel
+  check misreads Ubuntu's numbering (SERVER-131779, fixed in 8.3.14). The adapter uses only
+  `find`, `sort` and `limit`, which behave the same on 7.0 and 8.x, including null ordering.
+  Moving back to 8.x is tracked in [#2](https://github.com/lavitsamson/keyset-kit/issues/2).

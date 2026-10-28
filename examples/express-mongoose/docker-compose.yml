@@ -1,6 +1,7 @@
 services:
   mongo:
-    image: mongo:8.3.9
+    # 7.0 until a MongoDB 8.x image runs on current Ubuntu kernels (see issue #2).
+    image: mongo:7.0.43
     ports:
       - '27018:27017'
     healthcheck:

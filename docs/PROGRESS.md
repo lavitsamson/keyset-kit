@@ -48,8 +48,12 @@ Notes: verified under several local timezones (Europe/Berlin, America/New_York, 
 ## 5. Mongoose adapter
 
 - [x] `paginateMongoose` (lean and hydrated queries, `$and` with caller filter, schema-path validation, projection check)
-- [x] Conformance suite on MongoDB 8.3.9 (fixed null-order mode) plus ObjectId tie-breaker, missing-field, `$or`, projection and immutability tests
+- [x] Conformance suite on MongoDB 7.0.43 (fixed null-order mode) plus ObjectId tie-breaker, missing-field, `$or`, projection and immutability tests
 - [x] MongoDB null ordering documented (README "Database notes", ADR 0003)
+
+Notes: tests ran on MongoDB 8.3.9 until GitHub's runners moved to the Ubuntu Azure 7.0 kernel, where
+every MongoDB 8.x release up to 8.3.13 exits at startup (SERVER-131779). CI uses 7.0.43 until an
+8.3.14 image is available ([#2](https://github.com/lavitsamson/keyset-kit/issues/2)).
 
 ## 6. Express middleware
 

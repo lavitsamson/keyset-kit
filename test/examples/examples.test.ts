@@ -11,7 +11,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { POSTGRES_IMAGE } from '../integration/postgres.js';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const MONGO_IMAGE = 'mongo:8.3.9';
+// Same image as the Mongoose integration tests (MongoDB 8.x can't start on CI's kernel, see #2).
+const MONGO_IMAGE = 'mongo:7.0.43';
 const SEEDED = 200;
 
 interface Post {
