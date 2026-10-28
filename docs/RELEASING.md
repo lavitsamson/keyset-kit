@@ -15,26 +15,32 @@ Releases are published from GitHub Actions by `.github/workflows/release.yml`. S
 
 GitHub repository settings:
 
-- **Actions > General > Workflow permissions**: enable _Allow GitHub Actions to create and approve
-  pull requests_.
+- **Actions > General > Actions permissions**: allow GitHub-owned actions plus
+  `pnpm/action-setup@*` and `changesets/*`, and require actions to be pinned to a full-length
+  commit SHA. A workflow that uses any other action fails at startup.
+- **Actions > General > Workflow permissions**: keep the default read-only token and enable _Allow
+  GitHub Actions to create and approve pull requests_.
 - **Environments**: create `npm` (the first run creates it otherwise). Optionally add yourself as a
   required reviewer so each publish waits for approval.
 
-### First publish (1.0.0)
+npm package settings (**keyset-kit > Settings** on npmjs.com, needs 2FA). Do this before the next
+release; without a trusted publisher the publish job has no way to authenticate:
 
-npm can't publish a package's first version through trusted publishing, so 1.0.0 uses a token:
+1. **Trusted publishing**: add GitHub Actions with owner `lavitsamson`, repository `keyset-kit`,
+   workflow `release.yml` and environment `npm`.
+2. **Publishing access**: choose _Require two-factor authentication and disallow tokens_.
 
-1. On npmjs.com, create a **granular access token**: read and write for all packages (the package
-   doesn't exist yet), shortest expiry, _Bypass two-factor authentication_ checked.
-2. Add it as the `NPM_TOKEN` secret of the `npm` environment (Settings > Environments > npm).
-3. Merge the Version Packages PR. The publish job uses the token and still attaches provenance.
+### First publish (1.0.0, done)
 
-### After the first publish
+npm can't publish a package's first version through trusted publishing, so 1.0.0 was published on
+2026-10-28 by the same workflow with a short-lived granular token that bypassed 2FA. The token was
+revoked straight afterwards and the step that used it was removed from `release.yml`.
 
-1. On npmjs.com, open **keyset-kit > Settings > Trusted publishing** and add GitHub Actions:
-   owner `lavitsamson`, repository `keyset-kit`, workflow `release.yml`, environment `npm`.
-2. Under **Publishing access**, choose _Require two-factor authentication and disallow tokens_.
-3. Delete the `NPM_TOKEN` secret and revoke the token on npmjs.com.
+Don't repeat this for a new package. npm is deprecating 2FA-bypass tokens, and from around January
+2027 they can't publish at all
+([GitHub changelog](https://github.blog/changelog/2026-07-08-npm-install-time-security-and-gat-bypass2fa-deprecation/)).
+Use staged publishing instead: CI stages the first version and a maintainer approves it on
+npmjs.com with 2FA.
 
 ## Verifying a release
 

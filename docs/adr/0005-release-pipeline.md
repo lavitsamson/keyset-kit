@@ -60,6 +60,15 @@ registry forever. Instead, 1.0.0 is published by the same workflow with a short-
 token in the `npm` environment's `NPM_TOKEN` secret, still with provenance. Afterwards the trusted
 publisher is configured, the secret deleted and token publishing disallowed on the package.
 
+1.0.0 was published this way on 2026-10-28. The token was then revoked and the bootstrap step
+removed from `release.yml`, so the workflow can only publish through OIDC.
+
+This route won't be available for future packages. npm is deprecating granular tokens that bypass
+2FA: from August 2026 they can't manage packages, and from around January 2027 they can't publish
+([GitHub changelog](https://github.blog/changelog/2026-07-08-npm-install-time-security-and-gat-bypass2fa-deprecation/)).
+The replacement for a new package is staged publishing, where CI stages the first version and a
+maintainer approves it with 2FA. A new package should start with that instead of a bypass token.
+
 ## Consequences
 
 - Releasing is reviewing and merging a PR. No one publishes from a machine.

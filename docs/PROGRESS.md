@@ -96,9 +96,16 @@ numbers are never edited by hand. Core is 2.99 kB of its 3 kB budget.
 - [x] One `major` changeset with the 1.0.0 release notes (replaces the pre-release changesets)
 - [x] npm, size, CI, docs and license badges; `CHANGELOG.md` ships in the package
 - [x] ADR 0005 (release pipeline), `docs/RELEASING.md` (one-time setup and verification)
-- [ ] First publish: one-time GitHub/npm setup in `docs/RELEASING.md`, then merge the Version Packages PR
+- [x] First publish: `keyset-kit@1.0.0` on npm, `v1.0.0` tag and GitHub release (2026-10-28)
+- [ ] npm trusted publisher + "disallow tokens" on the package (before the next release, see `docs/RELEASING.md`)
 
 Notes: npm can't publish a package's first version through trusted publishing, so 1.0.0 uses a
 short-lived token in the `npm` environment (still with provenance); trusted publishing takes over
 afterwards. `changeset version` and `changeset pack` were dry-run locally: 0.0.0 → 1.0.0, the
 generated changelog passes Prettier, and the tarball holds `dist/`, README, LICENSE and the changelog.
+
+The publish went out with the bootstrap token, which was then revoked; the token step is gone from
+`release.yml`. Getting there needed two CI fixes: allowlisting `pnpm/action-setup` and
+`changesets/*` (runs had failed at startup), and moving the MongoDB tests to 7.0 (see milestone 5).
+npm showed the package as under review right after the publish. Provenance still needs checking
+(`npm view keyset-kit@1.0.0 dist.attestations`) once the review clears.
