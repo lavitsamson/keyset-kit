@@ -1,6 +1,6 @@
 {
   "name": "keyset-kit",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Tiny, type-safe keyset (cursor) pagination for Prisma, TypeORM, Mongoose and Express. Zero runtime dependencies.",
   "keywords": [
     "pagination",
