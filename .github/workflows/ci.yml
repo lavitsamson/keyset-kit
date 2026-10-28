@@ -58,11 +58,14 @@ jobs:
 
       - name: Mongo container by hand (debug)
         run: |
-          docker run -d --name mongo-debug mongo:8.3.9 --replSet rs0 --bind_ip_all
-          sleep 20
-          docker logs mongo-debug 2>&1 | tail -40
-          docker exec mongo-debug mongosh --quiet --eval 'db.runCommand({ ping: 1 })' || true
-          docker rm -f mongo-debug
+          uname -r
+          for v in 8.3.11 8.3.13 8.0.34; do
+            echo "=== mongo:$v"
+            docker run -d --name "m$v" "mongo:$v" --replSet rs0 --bind_ip_all >/dev/null
+            sleep 15
+            docker exec "m$v" mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' && echo "RESULT $v OK" || { echo "RESULT $v FAIL"; docker logs "m$v" 2>&1 | grep '"s":"F"' | tail -3; }
+            docker rm -f "m$v" >/dev/null
+          done
 
       - name: Integration tests (Testcontainers) + coverage
         run: pnpm test:int test/integration/mongoose.test.ts
