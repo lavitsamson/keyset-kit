@@ -53,8 +53,21 @@ jobs:
 
       # GitHub-hosted Ubuntu runners include Docker, which Testcontainers uses for real databases.
       # Coverage thresholds apply to the combined unit + integration run.
+      - name: Docker version (debug)
+        run: docker version
+
+      - name: Mongo container by hand (debug)
+        run: |
+          docker run -d --name mongo-debug mongo:8.3.9 --replSet rs0 --bind_ip_all
+          sleep 20
+          docker logs mongo-debug 2>&1 | tail -40
+          docker exec mongo-debug mongosh --quiet --eval 'db.runCommand({ ping: 1 })' || true
+          docker rm -f mongo-debug
+
       - name: Integration tests (Testcontainers) + coverage
-        run: pnpm test:coverage
+        run: pnpm test:int test/integration/mongoose.test.ts
+        env:
+          DEBUG: testcontainers*
 
       - name: Package checks (publint + attw)
         run: pnpm check:package
