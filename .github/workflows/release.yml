@@ -140,20 +140,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # npm can't publish a package's first version through trusted publishing, so 1.0.0 needs a
-      # short-lived granular token in the NPM_TOKEN environment secret. Delete the secret once
-      # the trusted publisher is configured; later releases authenticate with OIDC only.
-      - name: Use bootstrap npm token (first publish only)
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        # Writes a reference to the variable, not the token itself.
-        run: |
-          if [ -n "$NPM_TOKEN" ]; then
-            echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' >> ~/.npmrc
-          fi
-
+      # Authenticates with npm trusted publishing (OIDC). No npm token is stored anywhere.
       - uses: changesets/action/publish@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           pack-dir-artifact-id: ${{ needs.pack.outputs.pack-dir-artifact-id }}
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
